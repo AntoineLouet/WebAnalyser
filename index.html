@@ -6,9 +6,9 @@
 <meta name="robots" content="noindex,nofollow">
 <title>WebAnalyser — Nobook</title>
 <style>
-  /* Layout concept : sur le modèle Umami — barre de métriques avec tendance,
-     un grand graphique en aire/courbe (vues + visiteurs), onglets par site,
-     panneaux pages/référents en dessous. */
+  /* Rendu calqué sur l'interface Umami réelle : tuiles avec badge plein,
+     barres empilées (visiteurs + vues), listes classées avec pourcentage,
+     mini-sparkline par site. */
   :root {
     color-scheme: light;
     --page: #f9f9f7;
@@ -19,13 +19,15 @@
     --grid: #e1e0d9;
     --baseline: #c3c2b7;
     --border: rgba(11,11,11,0.10);
-    --series-views: #2a78d6;
-    --series-visitors: #eb6834;
+    --series-visitors: #2a78d6;
+    --series-views: #9ec5f4;
     --site-1: #2a78d6;
     --site-2: #eb6834;
     --site-3: #1baf7a;
-    --good: #006300;
-    --bad: #d03b3b;
+    --good-bg: #e3f3e3;
+    --good-fg: #006300;
+    --bad-bg: #fbe7e5;
+    --bad-fg: #d03b3b;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -38,13 +40,15 @@
       --grid: #2c2c2a;
       --baseline: #383835;
       --border: rgba(255,255,255,0.10);
-      --series-views: #3987e5;
-      --series-visitors: #d95926;
+      --series-visitors: #3987e5;
+      --series-views: #184f95;
       --site-1: #3987e5;
       --site-2: #d95926;
       --site-3: #199e70;
-      --good: #0ca30c;
-      --bad: #e66767;
+      --good-bg: #0f2a12;
+      --good-fg: #3ddc3d;
+      --bad-bg: #351413;
+      --bad-fg: #e66767;
     }
   }
   :root[data-theme="dark"] {
@@ -57,13 +61,15 @@
     --grid: #2c2c2a;
     --baseline: #383835;
     --border: rgba(255,255,255,0.10);
-    --series-views: #3987e5;
-    --series-visitors: #d95926;
+    --series-visitors: #3987e5;
+    --series-views: #184f95;
     --site-1: #3987e5;
     --site-2: #d95926;
     --site-3: #199e70;
-    --good: #0ca30c;
-    --bad: #e66767;
+    --good-bg: #0f2a12;
+    --good-fg: #3ddc3d;
+    --bad-bg: #351413;
+    --bad-fg: #e66767;
   }
 
   * { box-sizing: border-box; }
@@ -146,7 +152,7 @@
 
   .tuiles {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
     margin-bottom: 16px;
   }
@@ -166,32 +172,24 @@
   .tuile .etiquette .puce {
     width: 8px; height: 8px; border-radius: 50%; flex: none;
   }
-  .tuile .ligne-valeur {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+  .tuile .valeur {
+    font-size: 1.9rem;
+    font-weight: 650;
     margin-top: 2px;
   }
-  .tuile .valeur {
-    font-size: 1.8rem;
-    font-weight: 650;
-  }
-  .tendance {
-    font-size: 0.76rem;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
+  .pastille {
     display: inline-flex;
     align-items: center;
-    gap: 2px;
+    gap: 3px;
+    font-size: 0.74rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+    padding: 3px 8px;
+    border-radius: 7px;
+    margin-top: 8px;
   }
-  .tendance.hausse { color: var(--good); }
-  .tendance.baisse { color: var(--bad); }
-  .tendance .flech { font-size: 0.7rem; }
-  .tuile .periode-comparee {
-    color: var(--ink-muted);
-    font-size: 0.7rem;
-    margin-top: 1px;
-  }
+  .pastille.hausse { background: var(--good-bg); color: var(--good-fg); }
+  .pastille.baisse { background: var(--bad-bg); color: var(--bad-fg); }
 
   .carte {
     background: var(--surface);
@@ -217,8 +215,8 @@
     font-size: 0.78rem;
     color: var(--ink-2);
   }
-  .legende .trait {
-    width: 12px; height: 3px; border-radius: 2px; flex: none;
+  .legende .puce-legende {
+    width: 9px; height: 9px; border-radius: 2px; flex: none;
   }
 
   .zone-graphique { position: relative; overflow-x: auto; }
@@ -248,6 +246,30 @@
     padding: 36px 10px;
   }
 
+  .onglets-souscarte {
+    display: flex;
+    gap: 14px;
+    border-bottom: 1px solid var(--grid);
+    margin-bottom: 10px;
+  }
+  .onglets-souscarte button {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--ink-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 0 0 8px;
+    cursor: pointer;
+    font-family: inherit;
+    border-bottom: 2px solid transparent;
+  }
+  .onglets-souscarte button[aria-selected="true"] {
+    color: var(--ink);
+    border-bottom-color: var(--series-visitors);
+    font-weight: 650;
+  }
+
   table.donnees {
     width: 100%;
     border-collapse: collapse;
@@ -262,22 +284,30 @@
     border-bottom: 1px solid var(--grid);
   }
   table.donnees td {
-    padding: 7px 8px 7px 0;
+    padding: 8px 8px 8px 0;
     border-bottom: 1px solid var(--grid);
     color: var(--ink);
   }
   table.donnees tr:last-child td { border-bottom: none; }
   table.donnees td.chemin {
-    max-width: 260px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  table.donnees td.nombre {
+  table.donnees td.chiffres {
     text-align: right;
+    width: 90px;
+  }
+  table.donnees .nombre {
     font-variant-numeric: tabular-nums;
-    color: var(--ink-2);
-    width: 70px;
+    font-weight: 600;
+  }
+  table.donnees .pourcentage {
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-muted);
+    font-size: 0.76rem;
+    margin-left: 6px;
   }
 
   .deux-colonnes {
@@ -292,9 +322,9 @@
 
   .apercu-site {
     display: grid;
-    grid-template-columns: 1fr auto auto;
+    grid-template-columns: 1fr auto auto auto;
     align-items: center;
-    gap: 10px 16px;
+    gap: 10px 14px;
     padding: 10px 0;
     border-bottom: 1px solid var(--grid);
   }
@@ -307,6 +337,7 @@
     font-size: 0.9rem;
   }
   .apercu-site .nom .puce { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .apercu-site .sparkline { flex: none; }
   .apercu-site .chiffre {
     font-variant-numeric: tabular-nums;
     text-align: right;
@@ -314,9 +345,13 @@
   }
   .apercu-site .chiffre .petit {
     display: block;
-    font-size: 0.7rem;
+    font-size: 0.68rem;
     color: var(--ink-muted);
     font-weight: 400;
+  }
+  @media (max-width: 480px) {
+    .apercu-site { grid-template-columns: 1fr auto; row-gap: 6px; }
+    .apercu-site .sparkline { display: none; }
   }
 </style>
 </head>
@@ -345,7 +380,7 @@
   var NOMS = { "riad-sasha": "Riad Sasha", "riadsoulmate": "Riad Soulmate", "chezmamiejo": "Chez Mamie Jo" };
   var ORDRE_COULEURS = ["riad-sasha", "chezmamiejo", "riadsoulmate"];
 
-  var etat = { jours: 30, actuel: null, precedent: null, ongletActif: "tous" };
+  var etat = { jours: 30, actuel: null, precedent: null, septJours: null, ongletActif: "tous", sousOnglet: "referrers" };
 
   function couleurSite(siteId) {
     var i = ORDRE_COULEURS.indexOf(siteId);
@@ -372,14 +407,15 @@
 
   async function charger() {
     try {
-      var [r1, r2] = await Promise.all([
+      var [r1, r2, r3] = await Promise.all([
         fetch(FONCTION + "?days=" + etat.jours),
-        fetch(FONCTION + "?days=" + (etat.jours * 2))
+        fetch(FONCTION + "?days=" + (etat.jours * 2)),
+        fetch(FONCTION + "?days=7")
       ]);
       var actuel = await r1.json();
       var double = await r2.json();
       etat.actuel = actuel;
-      // période précédente = (total sur 2x la fenêtre) - (total sur la fenêtre actuelle)
+      etat.septJours = await r3.json();
       var precedent = { sites: {} };
       Object.keys(double.sites || {}).forEach(function (id) {
         var tot = double.sites[id];
@@ -458,8 +494,8 @@
     return { views: v, visitors: u };
   }
 
-  function joursCombines() {
-    var sites = etat.actuel.sites || {};
+  function joursCombines(bloc) {
+    var sites = (bloc && bloc.sites) || {};
     var parJour = {};
     Object.keys(sites).forEach(function (id) {
       (sites[id].by_day || []).forEach(function (j) {
@@ -471,20 +507,14 @@
     return Object.keys(parJour).sort().map(function (k) { return parJour[k]; });
   }
 
-  function badgeTendance(actuel, precedent) {
-    var badge = document.createElement("span");
-    if (!precedent || precedent === 0) {
-      return null;
-    }
-    var variation = ((actuel - precedent) / precedent) * 100;
+  function pastilleTendance(actuelV, precedentV) {
+    if (!precedentV) return null;
+    var variation = ((actuelV - precedentV) / precedentV) * 100;
     var hausse = variation >= 0;
-    badge.className = "tendance " + (hausse ? "hausse" : "baisse");
-    var flech = document.createElement("span");
-    flech.className = "flech";
-    flech.textContent = hausse ? "▲" : "▼";
-    badge.appendChild(flech);
-    badge.appendChild(document.createTextNode(Math.abs(Math.round(variation)) + "%"));
-    return badge;
+    var p = document.createElement("span");
+    p.className = "pastille " + (hausse ? "hausse" : "baisse");
+    p.appendChild(document.createTextNode((hausse ? "▲ " : "▼ ") + Math.abs(Math.round(variation)) + "%"));
+    return p;
   }
 
   function rendreApercuGlobal(contenu) {
@@ -494,8 +524,8 @@
 
     var tuiles = document.createElement("div");
     tuiles.className = "tuiles";
-    tuiles.appendChild(tuile("Vues totales", totActuel.views, totPrecedent.views, "var(--series-views)"));
     tuiles.appendChild(tuile("Visiteurs uniques", totActuel.visitors, totPrecedent.visitors, "var(--series-visitors)"));
+    tuiles.appendChild(tuile("Vues", totActuel.views, totPrecedent.views, "var(--series-views)"));
     contenu.appendChild(tuiles);
 
     if (sites.length > 0) {
@@ -506,7 +536,7 @@
       zoneGraph.className = "zone-graphique";
       carteGraph.appendChild(zoneGraph);
       contenu.appendChild(carteGraph);
-      dessinerCourbe(zoneGraph, joursCombines());
+      dessinerBarres(zoneGraph, joursCombines(etat.actuel));
     }
 
     var carte = document.createElement("div");
@@ -518,6 +548,7 @@
     if (sites.length === 0) {
       carte.appendChild(elementVide("Pas encore de visite enregistrée sur cette période."));
     } else {
+      var septSites = (etat.septJours && etat.septJours.sites) || {};
       sites.forEach(function (id) {
         var s = etat.actuel.sites[id];
         var ligne = document.createElement("div");
@@ -532,12 +563,11 @@
         nom.appendChild(document.createTextNode(nomSite(id)));
         ligne.appendChild(nom);
 
-        var vues = document.createElement("div");
-        vues.className = "chiffre";
-        var vVal = document.createElement("span"); vVal.textContent = formatNombre(s.views);
-        var vLbl = document.createElement("span"); vLbl.className = "petit"; vLbl.textContent = "vues";
-        vues.appendChild(vVal); vues.appendChild(vLbl);
-        ligne.appendChild(vues);
+        var spark = document.createElement("span");
+        spark.className = "sparkline";
+        var joursSept = (septSites[id] && septSites[id].by_day) || [];
+        spark.appendChild(dessinerSparkline(joursSept, couleurSite(id)));
+        ligne.appendChild(spark);
 
         var visiteurs = document.createElement("div");
         visiteurs.className = "chiffre";
@@ -545,6 +575,13 @@
         var uLbl = document.createElement("span"); uLbl.className = "petit"; uLbl.textContent = "visiteurs";
         visiteurs.appendChild(uVal); visiteurs.appendChild(uLbl);
         ligne.appendChild(visiteurs);
+
+        var vues = document.createElement("div");
+        vues.className = "chiffre";
+        var vVal = document.createElement("span"); vVal.textContent = formatNombre(s.views);
+        var vLbl = document.createElement("span"); vLbl.className = "petit"; vLbl.textContent = "vues";
+        vues.appendChild(vVal); vues.appendChild(vLbl);
+        ligne.appendChild(vues);
 
         carte.appendChild(ligne);
       });
@@ -562,8 +599,8 @@
 
     var tuiles = document.createElement("div");
     tuiles.className = "tuiles";
-    tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
     tuiles.appendChild(tuile("Visiteurs uniques", s.visitors, sPrec.visitors, "var(--series-visitors)"));
+    tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
     contenu.appendChild(tuiles);
 
     var carteGraph = document.createElement("div");
@@ -573,26 +610,28 @@
     zoneGraph.className = "zone-graphique";
     carteGraph.appendChild(zoneGraph);
     contenu.appendChild(carteGraph);
-    dessinerCourbe(zoneGraph, s.by_day);
+    dessinerBarres(zoneGraph, s.by_day);
 
-    var colonnes = document.createElement("div");
-    colonnes.className = "deux-colonnes";
+    var carteListes = document.createElement("div");
+    carteListes.className = "carte";
+    var ongletsSous = document.createElement("div");
+    ongletsSous.className = "onglets-souscarte";
+    var btnPages = document.createElement("button"); btnPages.textContent = "Pages"; btnPages.setAttribute("role", "tab");
+    var btnRef = document.createElement("button"); btnRef.textContent = "Référents"; btnRef.setAttribute("role", "tab");
+    btnPages.addEventListener("click", function () { etat.sousOnglet = "pages"; rendre(); });
+    btnRef.addEventListener("click", function () { etat.sousOnglet = "referrers"; rendre(); });
+    btnPages.setAttribute("aria-selected", String(etat.sousOnglet === "pages"));
+    btnRef.setAttribute("aria-selected", String(etat.sousOnglet === "referrers"));
+    ongletsSous.appendChild(btnPages);
+    ongletsSous.appendChild(btnRef);
+    carteListes.appendChild(ongletsSous);
 
-    var cartePages = document.createElement("div");
-    cartePages.className = "carte";
-    var h2p = document.createElement("h2"); h2p.textContent = "Pages les plus vues";
-    cartePages.appendChild(h2p);
-    cartePages.appendChild(tableauDonnees(s.top_pages, "path", "Page"));
-    colonnes.appendChild(cartePages);
-
-    var carteRef = document.createElement("div");
-    carteRef.className = "carte";
-    var h2r = document.createElement("h2"); h2r.textContent = "Référents";
-    carteRef.appendChild(h2r);
-    carteRef.appendChild(tableauDonnees(s.top_referrers, "referrer", "Source"));
-    colonnes.appendChild(carteRef);
-
-    contenu.appendChild(colonnes);
+    if (etat.sousOnglet === "pages") {
+      carteListes.appendChild(tableauDonnees(s.top_pages, "path", "Page", s.views));
+    } else {
+      carteListes.appendChild(tableauDonnees(s.top_referrers, "referrer", "Source", s.views));
+    }
+    contenu.appendChild(carteListes);
   }
 
   function enteteGraphique() {
@@ -600,11 +639,10 @@
     var h2 = document.createElement("h2"); h2.textContent = "Tendance";
     var legende = document.createElement("div");
     legende.className = "legende";
-    [["Vues", "var(--series-views)"], ["Visiteurs uniques", "var(--series-visitors)"]].forEach(function (p) {
+    [["Visiteurs", "var(--series-visitors)"], ["Vues", "var(--series-views)"]].forEach(function (p) {
       var item = document.createElement("span"); item.className = "item";
-      var trait = document.createElement("span"); trait.className = "trait"; trait.style.background = p[0] === "Vues" ? p[1] : p[1];
-      trait.style.background = p[1];
-      item.appendChild(trait);
+      var puce = document.createElement("span"); puce.className = "puce-legende"; puce.style.background = p[1];
+      item.appendChild(puce);
       item.appendChild(document.createTextNode(p[0]));
       legende.appendChild(item);
     });
@@ -625,22 +663,14 @@
     e.appendChild(document.createTextNode(label));
     d.appendChild(e);
 
-    var ligneValeur = document.createElement("div");
-    ligneValeur.className = "ligne-valeur";
-    var v = document.createElement("span");
+    var v = document.createElement("div");
     v.className = "valeur";
     v.textContent = formatNombre(valeurActuelle);
-    ligneValeur.appendChild(v);
-    var badge = badgeTendance(valeurActuelle, valeurPrecedente);
-    if (badge) ligneValeur.appendChild(badge);
-    d.appendChild(ligneValeur);
+    d.appendChild(v);
 
-    if (valeurPrecedente > 0) {
-      var p = document.createElement("div");
-      p.className = "periode-comparee";
-      p.textContent = "vs période précédente";
-      d.appendChild(p);
-    }
+    var badge = pastilleTendance(valeurActuelle, valeurPrecedente);
+    if (badge) d.appendChild(badge);
+
     return d;
   }
 
@@ -651,7 +681,7 @@
     return p;
   }
 
-  function tableauDonnees(lignes, cle, entete) {
+  function tableauDonnees(lignes, cle, entete, totalVues) {
     if (!lignes || lignes.length === 0) {
       return elementVide("Rien à afficher pour l'instant.");
     }
@@ -672,8 +702,15 @@
       tdNom.textContent = ligne[cle] || "/";
       tdNom.title = ligne[cle] || "";
       var tdVal = document.createElement("td");
-      tdVal.className = "nombre";
-      tdVal.textContent = formatNombre(ligne.views);
+      tdVal.className = "chiffres";
+      var nb = document.createElement("span"); nb.className = "nombre"; nb.textContent = formatNombre(ligne.views);
+      tdVal.appendChild(nb);
+      if (totalVues > 0) {
+        var pct = document.createElement("span");
+        pct.className = "pourcentage";
+        pct.textContent = Math.round((ligne.views / totalVues) * 100) + "%";
+        tdVal.appendChild(pct);
+      }
       tr.appendChild(tdNom); tr.appendChild(tdVal);
       tbody.appendChild(tr);
     });
@@ -681,26 +718,34 @@
     return table;
   }
 
-  // Courbe lissée Catmull-Rom -> Bézier cubique
-  function cheminLisse(pts) {
-    if (pts.length < 2) return "";
-    if (pts.length === 2) return "M" + pts[0].x + "," + pts[0].y + " L" + pts[1].x + "," + pts[1].y;
-    var d = "M" + pts[0].x + "," + pts[0].y;
-    for (var i = 0; i < pts.length - 1; i++) {
-      var p0 = pts[i === 0 ? 0 : i - 1];
-      var p1 = pts[i];
-      var p2 = pts[i + 1];
-      var p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
-      var c1x = p1.x + (p2.x - p0.x) / 6;
-      var c1y = p1.y + (p2.y - p0.y) / 6;
-      var c2x = p2.x - (p3.x - p1.x) / 6;
-      var c2y = p2.y - (p3.y - p1.y) / 6;
-      d += " C" + c1x + "," + c1y + " " + c2x + "," + c2y + " " + p2.x + "," + p2.y;
-    }
-    return d;
+  function dessinerSparkline(jours, couleur) {
+    var largeur = 64, hauteur = 24;
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", largeur);
+    svg.setAttribute("height", hauteur);
+    svg.setAttribute("viewBox", "0 0 " + largeur + " " + hauteur);
+    if (!jours || jours.length < 2) return svg;
+    var max = 1;
+    jours.forEach(function (j) { max = Math.max(max, j.views); });
+    var n = jours.length;
+    var pts = jours.map(function (j, i) {
+      var x = (i / (n - 1)) * (largeur - 4) + 2;
+      var y = hauteur - 3 - (j.views / max) * (hauteur - 6);
+      return x + "," + y;
+    });
+    var polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    polyline.setAttribute("points", pts.join(" "));
+    polyline.setAttribute("fill", "none");
+    polyline.setAttribute("stroke", couleur);
+    polyline.setAttribute("stroke-width", "1.5");
+    polyline.setAttribute("stroke-linecap", "round");
+    polyline.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(polyline);
+    return svg;
   }
 
-  function dessinerCourbe(conteneur, jours) {
+  // Barres empilées : visiteurs (teinte forte) en bas, complément des vues (teinte claire) au-dessus
+  function dessinerBarres(conteneur, jours) {
     conteneur.textContent = "";
     if (!jours || jours.length === 0) {
       conteneur.appendChild(elementVide("Pas encore assez de données pour tracer une tendance."));
@@ -708,10 +753,11 @@
     }
 
     var n = jours.length;
-    var pxParJour = n <= 14 ? 46 : (n <= 30 ? 26 : 10);
-    var largeur = Math.max(560, n * pxParJour);
+    var epaisseur = n <= 14 ? 22 : (n <= 30 ? 12 : 5);
+    var pas = Math.max(epaisseur + 6, epaisseur * 1.7);
+    var largeur = Math.max(560, n * pas);
     var hauteur = 220;
-    var marge = { haut: 16, bas: 26, gauche: 6, droite: 6 };
+    var marge = { haut: 20, bas: 26, gauche: 8, droite: 8 };
     var zoneH = hauteur - marge.haut - marge.bas;
     var zoneL = largeur - marge.gauche - marge.droite;
 
@@ -722,11 +768,8 @@
     if (maxAxe < maxVal) maxAxe += echelle;
     if (maxAxe === 0) maxAxe = 1;
 
-    function xDe(i) { return marge.gauche + (n === 1 ? zoneL / 2 : (i / (n - 1)) * zoneL); }
+    function xCentre(i) { return marge.gauche + (n === 1 ? zoneL / 2 : ((i + 0.5) / n) * zoneL); }
     function yDe(v) { return marge.haut + zoneH - (v / maxAxe) * zoneH; }
-
-    var ptsVues = jours.map(function (j, i) { return { x: xDe(i), y: yDe(j.views) }; });
-    var ptsVisiteurs = jours.map(function (j, i) { return { x: xDe(i), y: yDe(j.visitors) }; });
 
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "graphique");
@@ -734,7 +777,6 @@
     svg.setAttribute("width", largeur);
     svg.setAttribute("height", hauteur);
 
-    // gridlines horizontales (0, milieu, max)
     [0, 0.5, 1].forEach(function (f) {
       var y = marge.haut + zoneH * (1 - f);
       var ligne = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -755,78 +797,68 @@
       svg.appendChild(label);
     });
 
-    // aire sous "vues"
-    var aire = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    var cheminVues = cheminLisse(ptsVues);
     var baseline = marge.haut + zoneH;
-    aire.setAttribute("d", cheminVues + " L" + ptsVues[n - 1].x + "," + baseline + " L" + ptsVues[0].x + "," + baseline + " Z");
-    aire.setAttribute("fill", "var(--series-views)");
-    aire.setAttribute("fill-opacity", "0.12");
-    aire.setAttribute("stroke", "none");
-    svg.appendChild(aire);
+    var rayon = Math.min(4, epaisseur / 2);
 
-    // ligne "visiteurs" (derrière la ligne vues)
-    var ligneVisiteurs = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    ligneVisiteurs.setAttribute("d", cheminLisse(ptsVisiteurs));
-    ligneVisiteurs.setAttribute("fill", "none");
-    ligneVisiteurs.setAttribute("stroke", "var(--series-visitors)");
-    ligneVisiteurs.setAttribute("stroke-width", "2");
-    ligneVisiteurs.setAttribute("stroke-linecap", "round");
-    ligneVisiteurs.setAttribute("stroke-linejoin", "round");
-    svg.appendChild(ligneVisiteurs);
-
-    // ligne "vues" (au-dessus)
-    var ligneVues = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    ligneVues.setAttribute("d", cheminVues);
-    ligneVues.setAttribute("fill", "none");
-    ligneVues.setAttribute("stroke", "var(--series-views)");
-    ligneVues.setAttribute("stroke-width", "2");
-    ligneVues.setAttribute("stroke-linecap", "round");
-    ligneVues.setAttribute("stroke-linejoin", "round");
-    svg.appendChild(ligneVues);
-
-    // étiquettes de dates (au plus ~6)
-    var pas = Math.max(1, Math.ceil(n / 6));
     jours.forEach(function (j, i) {
-      if (i % pas !== 0 && i !== n - 1) return;
+      var cx = xCentre(i);
+      var x0 = cx - epaisseur / 2;
+      var yVisiteurs = yDe(j.visitors);
+      var yVues = yDe(j.views);
+
+      if (j.visitors > 0) {
+        svg.appendChild(barreArrondie(x0, yVisiteurs, epaisseur, baseline - yVisiteurs, rayon, "var(--series-visitors)"));
+      }
+      if (j.views > j.visitors) {
+        svg.appendChild(barreArrondie(x0, yVues, epaisseur, yVisiteurs - yVues, rayon, "var(--series-views)"));
+      } else if (j.views > 0 && j.visitors === 0) {
+        // cas limite : vues sans visiteurs comptés (ne devrait pas arriver, sécurité d'affichage)
+        svg.appendChild(barreArrondie(x0, yVues, epaisseur, baseline - yVues, rayon, "var(--series-views)"));
+      }
+    });
+
+    var pasLabel = Math.max(1, Math.ceil(n / 6));
+    jours.forEach(function (j, i) {
+      if (i % pasLabel !== 0 && i !== n - 1) return;
       var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      label.setAttribute("x", xDe(i));
+      label.setAttribute("x", xCentre(i));
       label.setAttribute("y", hauteur - 7);
-      label.setAttribute("text-anchor", i === 0 ? "start" : (i === n - 1 ? "end" : "middle"));
+      label.setAttribute("text-anchor", "middle");
       label.setAttribute("font-size", "10");
       label.setAttribute("fill", "var(--ink-muted)");
       label.textContent = formatJour(j.day);
       svg.appendChild(label);
     });
 
-    // crosshair + points + zone de survol
-    var crosshair = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    crosshair.setAttribute("y1", marge.haut);
-    crosshair.setAttribute("y2", baseline);
-    crosshair.setAttribute("stroke", "var(--baseline)");
-    crosshair.setAttribute("stroke-width", "1");
-    crosshair.style.opacity = "0";
-    svg.appendChild(crosshair);
-
-    var pointVues = creerPoint("var(--series-views)");
-    var pointVisiteurs = creerPoint("var(--series-visitors)");
-    svg.appendChild(pointVues);
-    svg.appendChild(pointVisiteurs);
-
-    function creerPoint(couleur) {
-      var g = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-      g.setAttribute("r", "4");
-      g.setAttribute("fill", couleur);
-      g.setAttribute("stroke", "var(--surface)");
-      g.setAttribute("stroke-width", "2");
-      g.style.opacity = "0";
-      return g;
+    function barreArrondie(x, y, w, h, r, couleur) {
+      if (h <= 0) h = 0;
+      r = Math.min(r, h);
+      var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      var d = "M" + x + "," + (y + h) +
+        " L" + x + "," + (y + r) +
+        " Q" + x + "," + y + " " + (x + r) + "," + y +
+        " L" + (x + w - r) + "," + y +
+        " Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) +
+        " L" + (x + w) + "," + (y + h) + " Z";
+      path.setAttribute("d", d);
+      path.setAttribute("fill", couleur);
+      return path;
     }
+
+    // survol : repère vertical qui s'accroche au jour le plus proche
+    var crosshair = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    crosshair.setAttribute("y", marge.haut);
+    crosshair.setAttribute("width", pas);
+    crosshair.setAttribute("height", zoneH);
+    crosshair.setAttribute("fill", "var(--ink)");
+    crosshair.style.opacity = "0";
+    crosshair.setAttribute("fill-opacity", "0.06");
+    svg.insertBefore(crosshair, svg.firstChild);
 
     var bulle = document.getElementById("bulle");
 
     function indexLePlusProche(mx) {
-      var i = Math.round(((mx - marge.gauche) / zoneL) * (n - 1));
+      var i = Math.floor(((mx - marge.gauche) / zoneL) * n);
       return Math.max(0, Math.min(n - 1, i));
     }
 
@@ -835,20 +867,17 @@
       var mx = ((evt.clientX - rectSvg.left) / rectSvg.width) * largeur;
       var i = indexLePlusProche(mx);
       var j = jours[i];
-      var x = xDe(i);
+      var cx = xCentre(i);
 
-      crosshair.setAttribute("x1", x);
-      crosshair.setAttribute("x2", x);
+      crosshair.setAttribute("x", cx - pas / 2);
       crosshair.style.opacity = "1";
-      pointVues.setAttribute("cx", x); pointVues.setAttribute("cy", yDe(j.views)); pointVues.style.opacity = "1";
-      pointVisiteurs.setAttribute("cx", x); pointVisiteurs.setAttribute("cy", yDe(j.visitors)); pointVisiteurs.style.opacity = "1";
 
       bulle.textContent = "";
       var titre = document.createElement("div");
       titre.className = "titre-bulle";
       titre.textContent = formatJour(j.day);
       bulle.appendChild(titre);
-      [["Vues", j.views, "var(--series-views)"], ["Visiteurs", j.visitors, "var(--series-visitors)"]].forEach(function (row) {
+      [["Visiteurs", j.visitors, "var(--series-visitors)"], ["Vues", j.views, "var(--series-views)"]].forEach(function (row) {
         var l = document.createElement("div");
         l.className = "ligne";
         var cle = document.createElement("span");
@@ -863,7 +892,7 @@
       });
 
       var rectConteneur = conteneur.getBoundingClientRect();
-      var xEcran = rectSvg.left - rectConteneur.left + (x / largeur) * rectSvg.width;
+      var xEcran = rectSvg.left - rectConteneur.left + (cx / largeur) * rectSvg.width;
       var decalage = xEcran < 70 ? 0 : (xEcran > conteneur.clientWidth - 70 ? -140 : -70);
       bulle.style.left = (xEcran + decalage) + "px";
       bulle.style.top = "4px";
@@ -871,8 +900,6 @@
     }
     function quitter() {
       crosshair.style.opacity = "0";
-      pointVues.style.opacity = "0";
-      pointVisiteurs.style.opacity = "0";
       bulle.style.opacity = "0";
     }
 
