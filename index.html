@@ -6,9 +6,9 @@
 <meta name="robots" content="noindex,nofollow">
 <title>WebAnalyser — Nobook</title>
 <style>
-  /* Layout concept : une page de suivi — bandeau de filtres fixe, onglets par
-     site, une carte de tendance par période en barres groupées (vues / visiteurs),
-     deux tableaux de détail (pages, référents). */
+  /* Layout concept : sur le modèle Umami — barre de métriques avec tendance,
+     un grand graphique en aire/courbe (vues + visiteurs), onglets par site,
+     panneaux pages/référents en dessous. */
   :root {
     color-scheme: light;
     --page: #f9f9f7;
@@ -25,6 +25,7 @@
     --site-2: #eb6834;
     --site-3: #1baf7a;
     --good: #006300;
+    --bad: #d03b3b;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
@@ -43,6 +44,7 @@
       --site-2: #d95926;
       --site-3: #199e70;
       --good: #0ca30c;
+      --bad: #e66767;
     }
   }
   :root[data-theme="dark"] {
@@ -61,6 +63,7 @@
     --site-2: #d95926;
     --site-3: #199e70;
     --good: #0ca30c;
+    --bad: #e66767;
   }
 
   * { box-sizing: border-box; }
@@ -71,20 +74,21 @@
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     padding-inline: 16px;
     padding-block: 20px 48px;
-    max-width: 1000px;
+    max-width: 1080px;
     margin-inline: auto;
   }
 
-  h1 { font-size: 1.35rem; font-weight: 650; margin: 0 0 2px; text-wrap: balance; }
-  .soustitre { color: var(--ink-2); font-size: 0.88rem; margin: 0 0 20px; }
-
-  .barre-filtres {
+  .entete {
     display: flex;
-    align-items: center;
-    gap: 8px;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
     flex-wrap: wrap;
     margin-bottom: 18px;
   }
+  h1 { font-size: 1.3rem; font-weight: 650; margin: 0 0 2px; text-wrap: balance; }
+  .soustitre { color: var(--ink-2); font-size: 0.85rem; margin: 0; }
+
   .plage {
     display: flex;
     gap: 2px;
@@ -92,6 +96,7 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 2px;
+    flex: none;
   }
   .plage button {
     appearance: none;
@@ -110,13 +115,12 @@
     background: var(--ink);
     color: var(--page);
   }
-  .maj { margin-left: auto; color: var(--ink-muted); font-size: 0.78rem; }
 
   .onglets {
     display: flex;
     gap: 4px;
     border-bottom: 1px solid var(--grid);
-    margin-bottom: 20px;
+    margin-bottom: 18px;
     overflow-x: auto;
   }
   .onglets button {
@@ -138,9 +142,11 @@
     font-weight: 650;
   }
 
+  .maj { color: var(--ink-muted); font-size: 0.76rem; margin: -10px 0 14px; }
+
   .tuiles {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 10px;
     margin-bottom: 16px;
   }
@@ -160,10 +166,31 @@
   .tuile .etiquette .puce {
     width: 8px; height: 8px; border-radius: 50%; flex: none;
   }
+  .tuile .ligne-valeur {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-top: 2px;
+  }
   .tuile .valeur {
     font-size: 1.8rem;
     font-weight: 650;
-    margin-top: 2px;
+  }
+  .tendance {
+    font-size: 0.76rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+  .tendance.hausse { color: var(--good); }
+  .tendance.baisse { color: var(--bad); }
+  .tendance .flech { font-size: 0.7rem; }
+  .tuile .periode-comparee {
+    color: var(--ink-muted);
+    font-size: 0.7rem;
+    margin-top: 1px;
   }
 
   .carte {
@@ -191,7 +218,7 @@
     color: var(--ink-2);
   }
   .legende .trait {
-    width: 10px; height: 10px; border-radius: 3px; flex: none;
+    width: 12px; height: 3px; border-radius: 2px; flex: none;
   }
 
   .zone-graphique { position: relative; overflow-x: auto; }
@@ -202,23 +229,23 @@
     background: var(--ink);
     color: var(--page);
     font-size: 0.76rem;
-    padding: 6px 9px;
+    padding: 8px 10px;
     border-radius: 8px;
     white-space: nowrap;
-    transform: translate(-50%, -100%);
     opacity: 0;
     transition: opacity 0.1s;
     z-index: 5;
   }
+  .bulle .titre-bulle { margin-bottom: 4px; opacity: 0.7; }
   .bulle strong { font-variant-numeric: tabular-nums; }
-  .bulle .ligne { display: flex; align-items: center; gap: 5px; }
-  .bulle .cle { width: 7px; height: 7px; border-radius: 2px; flex: none; }
+  .bulle .ligne { display: flex; align-items: center; gap: 6px; }
+  .bulle .cle { width: 8px; height: 8px; border-radius: 2px; flex: none; }
 
   .vide {
     color: var(--ink-muted);
     font-size: 0.85rem;
     text-align: center;
-    padding: 30px 10px;
+    padding: 36px 10px;
   }
 
   table.donnees {
@@ -260,6 +287,7 @@
   }
   @media (max-width: 640px) {
     .deux-colonnes { grid-template-columns: 1fr; }
+    .entete { flex-direction: column; }
   }
 
   .apercu-site {
@@ -294,19 +322,20 @@
 </head>
 <body>
 
-<h1>WebAnalyser</h1>
-<p class="soustitre">Vues et visiteurs uniques de tes sites, en direct depuis le projet Supabase Nobook.</p>
-
-<div class="barre-filtres">
+<div class="entete">
+  <div>
+    <h1>WebAnalyser</h1>
+    <p class="soustitre">Vues et visiteurs uniques de tes sites, en direct depuis le projet Supabase Nobook.</p>
+  </div>
   <div class="plage" role="group" aria-label="Période">
     <button data-jours="7">7 jours</button>
     <button data-jours="30" aria-pressed="true">30 jours</button>
     <button data-jours="90">90 jours</button>
   </div>
-  <span class="maj" id="maj"></span>
 </div>
 
 <div class="onglets" id="onglets" role="tablist"></div>
+<p class="maj" id="maj"></p>
 <div id="contenu"></div>
 <div class="bulle" id="bulle"></div>
 
@@ -316,7 +345,7 @@
   var NOMS = { "riad-sasha": "Riad Sasha", "riadsoulmate": "Riad Soulmate", "chezmamiejo": "Chez Mamie Jo" };
   var ORDRE_COULEURS = ["riad-sasha", "chezmamiejo", "riadsoulmate"];
 
-  var etat = { jours: 30, donnees: null, ongletActif: "tous" };
+  var etat = { jours: 30, actuel: null, precedent: null, ongletActif: "tous" };
 
   function couleurSite(siteId) {
     var i = ORDRE_COULEURS.indexOf(siteId);
@@ -343,20 +372,35 @@
 
   async function charger() {
     try {
-      var r = await fetch(FONCTION + "?days=" + etat.jours);
-      var json = await r.json();
-      etat.donnees = json;
+      var [r1, r2] = await Promise.all([
+        fetch(FONCTION + "?days=" + etat.jours),
+        fetch(FONCTION + "?days=" + (etat.jours * 2))
+      ]);
+      var actuel = await r1.json();
+      var double = await r2.json();
+      etat.actuel = actuel;
+      // période précédente = (total sur 2x la fenêtre) - (total sur la fenêtre actuelle)
+      var precedent = { sites: {} };
+      Object.keys(double.sites || {}).forEach(function (id) {
+        var tot = double.sites[id];
+        var cur = (actuel.sites && actuel.sites[id]) || { views: 0, visitors: 0 };
+        precedent.sites[id] = {
+          views: Math.max(0, tot.views - cur.views),
+          visitors: Math.max(0, tot.visitors - cur.visitors)
+        };
+      });
+      etat.precedent = precedent;
     } catch (e) {
-      etat.donnees = { erreur: true };
+      etat.actuel = { erreur: true };
     }
     construireOnglets();
     rendre();
   }
 
   function listeSites() {
-    if (!etat.donnees || !etat.donnees.sites) return [];
-    return Object.keys(etat.donnees.sites).sort(function (a, b) {
-      return etat.donnees.sites[b].views - etat.donnees.sites[a].views;
+    if (!etat.actuel || !etat.actuel.sites) return [];
+    return Object.keys(etat.actuel.sites).sort(function (a, b) {
+      return etat.actuel.sites[b].views - etat.actuel.sites[a].views;
     });
   }
 
@@ -368,7 +412,6 @@
     var btnTous = document.createElement("button");
     btnTous.textContent = "Tous les sites";
     btnTous.setAttribute("role", "tab");
-    btnTous.setAttribute("aria-selected", String(etat.ongletActif === "tous"));
     btnTous.addEventListener("click", function () { etat.ongletActif = "tous"; rendre(); });
     conteneur.appendChild(btnTous);
 
@@ -376,16 +419,13 @@
       var b = document.createElement("button");
       b.textContent = nomSite(id);
       b.setAttribute("role", "tab");
-      b.setAttribute("aria-selected", String(etat.ongletActif === id));
       b.addEventListener("click", function () { etat.ongletActif = id; rendre(); });
       conteneur.appendChild(b);
     });
 
-    Array.prototype.forEach.call(conteneur.children, function (b) {
-      b.setAttribute("aria-selected", String(
-        (b.textContent === "Tous les sites" && etat.ongletActif === "tous") ||
-        b.textContent === nomSite(etat.ongletActif)
-      ));
+    Array.prototype.forEach.call(conteneur.children, function (b, idx) {
+      var estActif = (idx === 0 && etat.ongletActif === "tous") || b.textContent === nomSite(etat.ongletActif);
+      b.setAttribute("aria-selected", String(estActif));
     });
   }
 
@@ -394,16 +434,13 @@
     var majEl = document.getElementById("maj");
     contenu.textContent = "";
 
-    if (!etat.donnees || etat.donnees.erreur) {
-      var p = document.createElement("p");
-      p.className = "vide";
-      p.textContent = "Impossible de charger les statistiques pour le moment.";
-      contenu.appendChild(p);
+    if (!etat.actuel || etat.actuel.erreur) {
+      contenu.appendChild(elementVide("Impossible de charger les statistiques pour le moment."));
       return;
     }
 
-    if (etat.donnees.generated_at) {
-      var d = new Date(etat.donnees.generated_at);
+    if (etat.actuel.generated_at) {
+      var d = new Date(etat.actuel.generated_at);
       majEl.textContent = "Mis à jour à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     }
 
@@ -414,22 +451,63 @@
     }
   }
 
-  function totalSites() {
-    var sites = etat.donnees.sites || {};
+  function totaux(bloc) {
+    var sites = (bloc && bloc.sites) || {};
     var v = 0, u = 0;
-    Object.keys(sites).forEach(function (id) { v += sites[id].views; u += sites[id].visitors; });
+    Object.keys(sites).forEach(function (id) { v += sites[id].views || 0; u += sites[id].visitors || 0; });
     return { views: v, visitors: u };
+  }
+
+  function joursCombines() {
+    var sites = etat.actuel.sites || {};
+    var parJour = {};
+    Object.keys(sites).forEach(function (id) {
+      (sites[id].by_day || []).forEach(function (j) {
+        if (!parJour[j.day]) parJour[j.day] = { day: j.day, views: 0, visitors: 0 };
+        parJour[j.day].views += j.views;
+        parJour[j.day].visitors += j.visitors;
+      });
+    });
+    return Object.keys(parJour).sort().map(function (k) { return parJour[k]; });
+  }
+
+  function badgeTendance(actuel, precedent) {
+    var badge = document.createElement("span");
+    if (!precedent || precedent === 0) {
+      return null;
+    }
+    var variation = ((actuel - precedent) / precedent) * 100;
+    var hausse = variation >= 0;
+    badge.className = "tendance " + (hausse ? "hausse" : "baisse");
+    var flech = document.createElement("span");
+    flech.className = "flech";
+    flech.textContent = hausse ? "▲" : "▼";
+    badge.appendChild(flech);
+    badge.appendChild(document.createTextNode(Math.abs(Math.round(variation)) + "%"));
+    return badge;
   }
 
   function rendreApercuGlobal(contenu) {
     var sites = listeSites();
-    var totaux = totalSites();
+    var totActuel = totaux(etat.actuel);
+    var totPrecedent = totaux(etat.precedent);
 
     var tuiles = document.createElement("div");
     tuiles.className = "tuiles";
-    tuiles.appendChild(tuile("Vues totales", totaux.views, "var(--series-views)"));
-    tuiles.appendChild(tuile("Visiteurs uniques", totaux.visitors, "var(--series-visitors)"));
+    tuiles.appendChild(tuile("Vues totales", totActuel.views, totPrecedent.views, "var(--series-views)"));
+    tuiles.appendChild(tuile("Visiteurs uniques", totActuel.visitors, totPrecedent.visitors, "var(--series-visitors)"));
     contenu.appendChild(tuiles);
+
+    if (sites.length > 0) {
+      var carteGraph = document.createElement("div");
+      carteGraph.className = "carte";
+      carteGraph.appendChild(enteteGraphique());
+      var zoneGraph = document.createElement("div");
+      zoneGraph.className = "zone-graphique";
+      carteGraph.appendChild(zoneGraph);
+      contenu.appendChild(carteGraph);
+      dessinerCourbe(zoneGraph, joursCombines());
+    }
 
     var carte = document.createElement("div");
     carte.className = "carte";
@@ -441,7 +519,7 @@
       carte.appendChild(elementVide("Pas encore de visite enregistrée sur cette période."));
     } else {
       sites.forEach(function (id) {
-        var s = etat.donnees.sites[id];
+        var s = etat.actuel.sites[id];
         var ligne = document.createElement("div");
         ligne.className = "apercu-site";
 
@@ -451,9 +529,7 @@
         puce.className = "puce";
         puce.style.background = couleurSite(id);
         nom.appendChild(puce);
-        var texteNom = document.createElement("span");
-        texteNom.textContent = nomSite(id);
-        nom.appendChild(texteNom);
+        nom.appendChild(document.createTextNode(nomSite(id)));
         ligne.appendChild(nom);
 
         var vues = document.createElement("div");
@@ -477,7 +553,8 @@
   }
 
   function rendreSite(contenu, id) {
-    var s = etat.donnees.sites[id];
+    var s = etat.actuel.sites[id];
+    var sPrec = (etat.precedent.sites && etat.precedent.sites[id]) || { views: 0, visitors: 0 };
     if (!s) {
       contenu.appendChild(elementVide("Pas encore de visite enregistrée pour " + nomSite(id) + " sur cette période."));
       return;
@@ -485,29 +562,18 @@
 
     var tuiles = document.createElement("div");
     tuiles.className = "tuiles";
-    tuiles.appendChild(tuile("Vues", s.views, "var(--series-views)"));
-    tuiles.appendChild(tuile("Visiteurs uniques", s.visitors, "var(--series-visitors)"));
+    tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
+    tuiles.appendChild(tuile("Visiteurs uniques", s.visitors, sPrec.visitors, "var(--series-visitors)"));
     contenu.appendChild(tuiles);
 
     var carteGraph = document.createElement("div");
     carteGraph.className = "carte";
-    var h2g = document.createElement("h2"); h2g.textContent = "Tendance";
-    var legende = document.createElement("div");
-    legende.className = "legende";
-    var item1 = document.createElement("span"); item1.className = "item";
-    var trait1 = document.createElement("span"); trait1.className = "trait"; trait1.style.background = "var(--series-views)";
-    item1.appendChild(trait1); item1.appendChild(document.createTextNode("Vues"));
-    var item2 = document.createElement("span"); item2.className = "item";
-    var trait2 = document.createElement("span"); trait2.className = "trait"; trait2.style.background = "var(--series-visitors)";
-    item2.appendChild(trait2); item2.appendChild(document.createTextNode("Visiteurs uniques"));
-    legende.appendChild(item1); legende.appendChild(item2);
+    carteGraph.appendChild(enteteGraphique());
     var zoneGraph = document.createElement("div");
     zoneGraph.className = "zone-graphique";
-    carteGraph.appendChild(h2g);
-    carteGraph.appendChild(legende);
     carteGraph.appendChild(zoneGraph);
     contenu.appendChild(carteGraph);
-    dessinerBarres(zoneGraph, s.by_day);
+    dessinerCourbe(zoneGraph, s.by_day);
 
     var colonnes = document.createElement("div");
     colonnes.className = "deux-colonnes";
@@ -529,7 +595,25 @@
     contenu.appendChild(colonnes);
   }
 
-  function tuile(label, valeur, couleur) {
+  function enteteGraphique() {
+    var frag = document.createDocumentFragment();
+    var h2 = document.createElement("h2"); h2.textContent = "Tendance";
+    var legende = document.createElement("div");
+    legende.className = "legende";
+    [["Vues", "var(--series-views)"], ["Visiteurs uniques", "var(--series-visitors)"]].forEach(function (p) {
+      var item = document.createElement("span"); item.className = "item";
+      var trait = document.createElement("span"); trait.className = "trait"; trait.style.background = p[0] === "Vues" ? p[1] : p[1];
+      trait.style.background = p[1];
+      item.appendChild(trait);
+      item.appendChild(document.createTextNode(p[0]));
+      legende.appendChild(item);
+    });
+    frag.appendChild(h2);
+    frag.appendChild(legende);
+    return frag;
+  }
+
+  function tuile(label, valeurActuelle, valeurPrecedente, couleur) {
     var d = document.createElement("div");
     d.className = "tuile";
     var e = document.createElement("div");
@@ -538,14 +622,25 @@
     puce.className = "puce";
     puce.style.background = couleur;
     e.appendChild(puce);
-    var texte = document.createElement("span");
-    texte.textContent = label;
-    e.appendChild(texte);
+    e.appendChild(document.createTextNode(label));
     d.appendChild(e);
-    var v = document.createElement("div");
+
+    var ligneValeur = document.createElement("div");
+    ligneValeur.className = "ligne-valeur";
+    var v = document.createElement("span");
     v.className = "valeur";
-    v.textContent = formatNombre(valeur);
-    d.appendChild(v);
+    v.textContent = formatNombre(valeurActuelle);
+    ligneValeur.appendChild(v);
+    var badge = badgeTendance(valeurActuelle, valeurPrecedente);
+    if (badge) ligneValeur.appendChild(badge);
+    d.appendChild(ligneValeur);
+
+    if (valeurPrecedente > 0) {
+      var p = document.createElement("div");
+      p.className = "periode-comparee";
+      p.textContent = "vs période précédente";
+      d.appendChild(p);
+    }
     return d;
   }
 
@@ -586,18 +681,40 @@
     return table;
   }
 
-  function dessinerBarres(conteneur, jours) {
+  // Courbe lissée Catmull-Rom -> Bézier cubique
+  function cheminLisse(pts) {
+    if (pts.length < 2) return "";
+    if (pts.length === 2) return "M" + pts[0].x + "," + pts[0].y + " L" + pts[1].x + "," + pts[1].y;
+    var d = "M" + pts[0].x + "," + pts[0].y;
+    for (var i = 0; i < pts.length - 1; i++) {
+      var p0 = pts[i === 0 ? 0 : i - 1];
+      var p1 = pts[i];
+      var p2 = pts[i + 1];
+      var p3 = pts[i + 2 < pts.length ? i + 2 : i + 1];
+      var c1x = p1.x + (p2.x - p0.x) / 6;
+      var c1y = p1.y + (p2.y - p0.y) / 6;
+      var c2x = p2.x - (p3.x - p1.x) / 6;
+      var c2y = p2.y - (p3.y - p1.y) / 6;
+      d += " C" + c1x + "," + c1y + " " + c2x + "," + c2y + " " + p2.x + "," + p2.y;
+    }
+    return d;
+  }
+
+  function dessinerCourbe(conteneur, jours) {
     conteneur.textContent = "";
     if (!jours || jours.length === 0) {
       conteneur.appendChild(elementVide("Pas encore assez de données pour tracer une tendance."));
       return;
     }
 
-    var largeurJour = 56;
-    var largeur = Math.max(320, jours.length * largeurJour);
-    var hauteur = 180;
-    var marge = { haut: 10, bas: 24, gauche: 4, droite: 4 };
+    var n = jours.length;
+    var pxParJour = n <= 14 ? 46 : (n <= 30 ? 26 : 10);
+    var largeur = Math.max(560, n * pxParJour);
+    var hauteur = 220;
+    var marge = { haut: 16, bas: 26, gauche: 6, droite: 6 };
     var zoneH = hauteur - marge.haut - marge.bas;
+    var zoneL = largeur - marge.gauche - marge.droite;
+
     var maxVal = 1;
     jours.forEach(function (j) { maxVal = Math.max(maxVal, j.views); });
     var echelle = Math.pow(10, Math.floor(Math.log10(maxVal)));
@@ -605,12 +722,19 @@
     if (maxAxe < maxVal) maxAxe += echelle;
     if (maxAxe === 0) maxAxe = 1;
 
+    function xDe(i) { return marge.gauche + (n === 1 ? zoneL / 2 : (i / (n - 1)) * zoneL); }
+    function yDe(v) { return marge.haut + zoneH - (v / maxAxe) * zoneH; }
+
+    var ptsVues = jours.map(function (j, i) { return { x: xDe(i), y: yDe(j.views) }; });
+    var ptsVisiteurs = jours.map(function (j, i) { return { x: xDe(i), y: yDe(j.visitors) }; });
+
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("class", "graphique");
     svg.setAttribute("viewBox", "0 0 " + largeur + " " + hauteur);
     svg.setAttribute("width", largeur);
     svg.setAttribute("height", hauteur);
 
+    // gridlines horizontales (0, milieu, max)
     [0, 0.5, 1].forEach(function (f) {
       var y = marge.haut + zoneH * (1 - f);
       var ligne = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -621,93 +745,151 @@
       ligne.setAttribute("stroke", "var(--grid)");
       ligne.setAttribute("stroke-width", "1");
       svg.appendChild(ligne);
-    });
-
-    var bulle = document.getElementById("bulle");
-
-    jours.forEach(function (j, i) {
-      var cx = i * largeurJour + largeurJour / 2;
-      var largeurBarre = 14;
-      var ecart = 3;
-
-      var hV = (j.views / maxAxe) * zoneH;
-      var hU = (j.visitors / maxAxe) * zoneH;
-
-      var groupe = document.createElementNS("http://www.w3.org/2000/svg", "g");
-
-      var barreVues = barreRect(cx - largeurBarre - ecart / 2, marge.haut + zoneH - hV, largeurBarre, hV, "var(--series-views)");
-      var barreVisiteurs = barreRect(cx + ecart / 2, marge.haut + zoneH - hU, largeurBarre, hU, "var(--series-visitors)");
-      groupe.appendChild(barreVues);
-      groupe.appendChild(barreVisiteurs);
-
-      var zoneSurvol = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      zoneSurvol.setAttribute("x", cx - largeurJour / 2);
-      zoneSurvol.setAttribute("y", marge.haut);
-      zoneSurvol.setAttribute("width", largeurJour);
-      zoneSurvol.setAttribute("height", zoneH);
-      zoneSurvol.setAttribute("fill", "transparent");
-      zoneSurvol.style.cursor = "pointer";
-
-      function montrer() {
-        bulle.textContent = "";
-        var titre = document.createElement("div");
-        titre.style.marginBottom = "4px";
-        titre.style.opacity = "0.75";
-        titre.textContent = formatJour(j.day);
-        bulle.appendChild(titre);
-        [["Vues", j.views, "var(--series-views)"], ["Visiteurs", j.visitors, "var(--series-visitors)"]].forEach(function (row) {
-          var l = document.createElement("div");
-          l.className = "ligne";
-          var cle = document.createElement("span");
-          cle.className = "cle";
-          cle.style.background = row[2];
-          l.appendChild(cle);
-          var txt = document.createElement("span");
-          txt.textContent = row[0] + " ";
-          var strong = document.createElement("strong");
-          strong.textContent = row[1];
-          l.appendChild(txt);
-          l.appendChild(strong);
-          bulle.appendChild(l);
-        });
-        var rectConteneur = conteneur.getBoundingClientRect();
-        var rectSvg = svg.getBoundingClientRect();
-        bulle.style.left = (rectSvg.left - rectConteneur.left + (cx / largeur) * rectSvg.width) + "px";
-        bulle.style.top = (marge.haut - 6) + "px";
-        bulle.style.opacity = "1";
-      }
-      function cacher() { bulle.style.opacity = "0"; }
-
-      zoneSurvol.addEventListener("pointerenter", montrer);
-      zoneSurvol.addEventListener("pointermove", montrer);
-      zoneSurvol.addEventListener("pointerleave", cacher);
-      groupe.appendChild(zoneSurvol);
 
       var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-      label.setAttribute("x", cx);
-      label.setAttribute("y", hauteur - 6);
-      label.setAttribute("text-anchor", "middle");
+      label.setAttribute("x", marge.gauche + 2);
+      label.setAttribute("y", y - 3);
+      label.setAttribute("font-size", "9");
+      label.setAttribute("fill", "var(--ink-muted)");
+      label.textContent = formatNombre(Math.round(maxAxe * f));
+      svg.appendChild(label);
+    });
+
+    // aire sous "vues"
+    var aire = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    var cheminVues = cheminLisse(ptsVues);
+    var baseline = marge.haut + zoneH;
+    aire.setAttribute("d", cheminVues + " L" + ptsVues[n - 1].x + "," + baseline + " L" + ptsVues[0].x + "," + baseline + " Z");
+    aire.setAttribute("fill", "var(--series-views)");
+    aire.setAttribute("fill-opacity", "0.12");
+    aire.setAttribute("stroke", "none");
+    svg.appendChild(aire);
+
+    // ligne "visiteurs" (derrière la ligne vues)
+    var ligneVisiteurs = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    ligneVisiteurs.setAttribute("d", cheminLisse(ptsVisiteurs));
+    ligneVisiteurs.setAttribute("fill", "none");
+    ligneVisiteurs.setAttribute("stroke", "var(--series-visitors)");
+    ligneVisiteurs.setAttribute("stroke-width", "2");
+    ligneVisiteurs.setAttribute("stroke-linecap", "round");
+    ligneVisiteurs.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(ligneVisiteurs);
+
+    // ligne "vues" (au-dessus)
+    var ligneVues = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    ligneVues.setAttribute("d", cheminVues);
+    ligneVues.setAttribute("fill", "none");
+    ligneVues.setAttribute("stroke", "var(--series-views)");
+    ligneVues.setAttribute("stroke-width", "2");
+    ligneVues.setAttribute("stroke-linecap", "round");
+    ligneVues.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(ligneVues);
+
+    // étiquettes de dates (au plus ~6)
+    var pas = Math.max(1, Math.ceil(n / 6));
+    jours.forEach(function (j, i) {
+      if (i % pas !== 0 && i !== n - 1) return;
+      var label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", xDe(i));
+      label.setAttribute("y", hauteur - 7);
+      label.setAttribute("text-anchor", i === 0 ? "start" : (i === n - 1 ? "end" : "middle"));
       label.setAttribute("font-size", "10");
       label.setAttribute("fill", "var(--ink-muted)");
       label.textContent = formatJour(j.day);
-      groupe.appendChild(label);
-
-      svg.appendChild(groupe);
+      svg.appendChild(label);
     });
+
+    // crosshair + points + zone de survol
+    var crosshair = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    crosshair.setAttribute("y1", marge.haut);
+    crosshair.setAttribute("y2", baseline);
+    crosshair.setAttribute("stroke", "var(--baseline)");
+    crosshair.setAttribute("stroke-width", "1");
+    crosshair.style.opacity = "0";
+    svg.appendChild(crosshair);
+
+    var pointVues = creerPoint("var(--series-views)");
+    var pointVisiteurs = creerPoint("var(--series-visitors)");
+    svg.appendChild(pointVues);
+    svg.appendChild(pointVisiteurs);
+
+    function creerPoint(couleur) {
+      var g = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      g.setAttribute("r", "4");
+      g.setAttribute("fill", couleur);
+      g.setAttribute("stroke", "var(--surface)");
+      g.setAttribute("stroke-width", "2");
+      g.style.opacity = "0";
+      return g;
+    }
+
+    var bulle = document.getElementById("bulle");
+
+    function indexLePlusProche(mx) {
+      var i = Math.round(((mx - marge.gauche) / zoneL) * (n - 1));
+      return Math.max(0, Math.min(n - 1, i));
+    }
+
+    function survol(evt) {
+      var rectSvg = svg.getBoundingClientRect();
+      var mx = ((evt.clientX - rectSvg.left) / rectSvg.width) * largeur;
+      var i = indexLePlusProche(mx);
+      var j = jours[i];
+      var x = xDe(i);
+
+      crosshair.setAttribute("x1", x);
+      crosshair.setAttribute("x2", x);
+      crosshair.style.opacity = "1";
+      pointVues.setAttribute("cx", x); pointVues.setAttribute("cy", yDe(j.views)); pointVues.style.opacity = "1";
+      pointVisiteurs.setAttribute("cx", x); pointVisiteurs.setAttribute("cy", yDe(j.visitors)); pointVisiteurs.style.opacity = "1";
+
+      bulle.textContent = "";
+      var titre = document.createElement("div");
+      titre.className = "titre-bulle";
+      titre.textContent = formatJour(j.day);
+      bulle.appendChild(titre);
+      [["Vues", j.views, "var(--series-views)"], ["Visiteurs", j.visitors, "var(--series-visitors)"]].forEach(function (row) {
+        var l = document.createElement("div");
+        l.className = "ligne";
+        var cle = document.createElement("span");
+        cle.className = "cle";
+        cle.style.background = row[2];
+        l.appendChild(cle);
+        l.appendChild(document.createTextNode(row[0] + " "));
+        var strong = document.createElement("strong");
+        strong.textContent = row[1];
+        l.appendChild(strong);
+        bulle.appendChild(l);
+      });
+
+      var rectConteneur = conteneur.getBoundingClientRect();
+      var xEcran = rectSvg.left - rectConteneur.left + (x / largeur) * rectSvg.width;
+      var decalage = xEcran < 70 ? 0 : (xEcran > conteneur.clientWidth - 70 ? -140 : -70);
+      bulle.style.left = (xEcran + decalage) + "px";
+      bulle.style.top = "4px";
+      bulle.style.opacity = "1";
+    }
+    function quitter() {
+      crosshair.style.opacity = "0";
+      pointVues.style.opacity = "0";
+      pointVisiteurs.style.opacity = "0";
+      bulle.style.opacity = "0";
+    }
+
+    var zoneSurvol = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    zoneSurvol.setAttribute("x", 0);
+    zoneSurvol.setAttribute("y", 0);
+    zoneSurvol.setAttribute("width", largeur);
+    zoneSurvol.setAttribute("height", hauteur);
+    zoneSurvol.setAttribute("fill", "transparent");
+    zoneSurvol.style.cursor = "crosshair";
+    zoneSurvol.addEventListener("pointermove", survol);
+    zoneSurvol.addEventListener("pointerenter", survol);
+    zoneSurvol.addEventListener("pointerleave", quitter);
+    svg.appendChild(zoneSurvol);
 
     conteneur.style.position = "relative";
     conteneur.appendChild(svg);
-  }
-
-  function barreRect(x, y, w, h, couleur) {
-    var r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-    r.setAttribute("x", x);
-    r.setAttribute("y", y);
-    r.setAttribute("width", w);
-    r.setAttribute("height", Math.max(h, 0));
-    r.setAttribute("rx", "3");
-    r.setAttribute("fill", couleur);
-    return r;
   }
 
   document.querySelectorAll(".plage button").forEach(function (b) {
