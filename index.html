@@ -5,66 +5,69 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>WebAnalyser — Nobook</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a1a1a'/%3E%3Ctext x='32' y='44' font-family='Georgia,serif' font-size='34' fill='%23f2f0eb' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,450;9..144,550;9..144,650&family=Jost:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230071e3'/%3E%3Ctext x='32' y='44' font-family='-apple-system,Helvetica,Arial,sans-serif' font-weight='600' font-size='32' fill='%23ffffff' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
 <style>
   :root {
     color-scheme: light;
-    --page: #f2f0eb;
-    --surface: #fbfaf7;
-    --surface-2: #e9e6dd;
-    --ink: #1a1a1a;
-    --ink-2: #55534c;
-    --ink-muted: #8c897f;
-    --grid: #e1ddd2;
-    --line: rgba(26,26,26,0.12);
-    --line-strong: rgba(26,26,26,0.22);
-    --series-visitors: #4a3d9e;
-    --series-views: #c7bff0;
-    --good-bg: #e4efe0;
-    --good-fg: #35692c;
-    --bad-bg: #f6e6df;
-    --bad-fg: #a8472a;
+    --page: #f2f2f7;
+    --surface: #ffffff;
+    --surface-2: #e8e8ed;
+    --ink: #1d1d1f;
+    --ink-2: #6e6e73;
+    --ink-muted: #86868b;
+    --grid: #e8e8ed;
+    --line: rgba(60,60,67,0.12);
+    --line-strong: rgba(60,60,67,0.29);
+    --series-visitors: #0071e3;
+    --series-views: #b9dcfb;
+    --good-bg: #34c759;
+    --good-fg: #ffffff;
+    --bad-bg: #ff3b30;
+    --bad-fg: #ffffff;
+    --topbar-bg: rgba(242,242,247,0.82);
+    --segment-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.06);
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       color-scheme: dark;
-      --page: #161513;
-      --surface: #1e1d1a;
-      --surface-2: #2a2824;
-      --ink: #f2f0eb;
-      --ink-2: #c7c3b8;
-      --ink-muted: #8f8b80;
-      --grid: #322f29;
-      --line: rgba(242,240,235,0.13);
-      --line-strong: rgba(242,240,235,0.24);
-      --series-visitors: #9d8ff2;
-      --series-views: #3c3464;
-      --good-bg: #20301e;
-      --good-fg: #80c46e;
-      --bad-bg: #3a2318;
-      --bad-fg: #e08a63;
+      --page: #000000;
+      --surface: #1c1c1e;
+      --surface-2: #2c2c2e;
+      --ink: #f5f5f7;
+      --ink-2: #a1a1a6;
+      --ink-muted: #6e6e73;
+      --grid: #2c2c2e;
+      --line: rgba(255,255,255,0.145);
+      --line-strong: rgba(255,255,255,0.28);
+      --series-visitors: #2997ff;
+      --series-views: #1b4160;
+      --good-bg: #30d158;
+      --good-fg: #000000;
+      --bad-bg: #ff453a;
+      --bad-fg: #000000;
+      --topbar-bg: rgba(0,0,0,0.78);
+      --segment-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
     }
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
-    --page: #161513;
-    --surface: #1e1d1a;
-    --surface-2: #2a2824;
-    --ink: #f2f0eb;
-    --ink-2: #c7c3b8;
-    --ink-muted: #8f8b80;
-    --grid: #322f29;
-    --line: rgba(242,240,235,0.13);
-    --line-strong: rgba(242,240,235,0.24);
-    --series-visitors: #9d8ff2;
-    --series-views: #3c3464;
-    --good-bg: #20301e;
-    --good-fg: #80c46e;
-    --bad-bg: #3a2318;
-    --bad-fg: #e08a63;
+    --page: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --ink: #f5f5f7;
+    --ink-2: #a1a1a6;
+    --ink-muted: #6e6e73;
+    --grid: #2c2c2e;
+    --line: rgba(255,255,255,0.145);
+    --line-strong: rgba(255,255,255,0.28);
+    --series-visitors: #2997ff;
+    --series-views: #1b4160;
+    --good-bg: #30d158;
+    --good-fg: #000000;
+    --bad-bg: #ff453a;
+    --bad-fg: #000000;
+    --topbar-bg: rgba(0,0,0,0.78);
+    --segment-shadow: 0 1px 3px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
   }
 
   * { box-sizing: border-box; }
@@ -72,47 +75,45 @@
   body {
     background: var(--page);
     color: var(--ink);
-    font-family: "Jost", "Segoe UI", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     padding-inline: 18px;
-    padding-block: 26px 56px;
+    padding-block: 0 56px;
     max-width: 720px;
     margin-inline: auto;
   }
 
   .entete {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 14px;
     flex-wrap: wrap;
-    padding-bottom: 18px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--line);
-  }
-  .marque { display: flex; align-items: baseline; gap: 9px; }
-  .marque .point {
-    width: 9px; height: 9px; border-radius: 50%;
-    background: var(--series-visitors);
-    flex: none;
-    transform: translateY(-2px);
+    margin: 0 -18px 20px;
+    padding: 18px 18px 14px;
+    background: var(--topbar-bg);
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    border-bottom: 0.5px solid var(--line);
   }
   h1 {
-    font-family: "Fraunces", Georgia, serif;
-    font-weight: 550;
-    font-size: 1.55rem;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    font-size: 1.6rem;
+    letter-spacing: -0.022em;
     margin: 0;
     text-wrap: balance;
   }
-  .soustitre { color: var(--ink-2); font-size: 0.86rem; margin: 3px 0 0; }
+  .soustitre { color: var(--ink-2); font-size: 0.85rem; margin: 3px 0 0; letter-spacing: -0.006em; }
 
   .plage {
     display: flex;
     gap: 2px;
     background: var(--surface-2);
-    border-radius: 999px;
-    padding: 3px;
+    border-radius: 10px;
+    padding: 2px;
     flex: none;
   }
   .plage button {
@@ -123,38 +124,45 @@
     font-family: inherit;
     font-size: 0.8rem;
     font-weight: 500;
-    padding: 6px 13px;
-    border-radius: 999px;
+    padding: 7px 13px;
+    border-radius: 8px;
     cursor: pointer;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
   }
-  .plage button:hover { color: var(--ink); }
   .plage button[aria-pressed="true"] {
-    background: var(--ink);
-    color: var(--page);
+    background: var(--surface);
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: var(--segment-shadow);
   }
 
   .retour {
     appearance: none;
     border: none;
     background: transparent;
-    color: var(--ink-2);
+    color: var(--series-visitors);
     font-family: inherit;
-    font-size: 0.82rem;
+    font-size: 0.86rem;
     font-weight: 500;
     padding: 0;
     margin-bottom: 18px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
   }
-  .retour:hover { color: var(--ink); }
+  .retour:hover { opacity: 0.7; }
   .retour svg { flex: none; }
 
-  .maj { color: var(--ink-muted); font-size: 0.75rem; margin: -12px 0 18px; }
+  .maj { color: var(--ink-muted); font-size: 0.75rem; margin: -2px 0 18px; }
 
-  /* Accueil : liste éditoriale des sites */
-  .liste-sites { border-top: 1px solid var(--line); }
+  /* Accueil : liste groupée des sites, façon réglages iOS */
+  .liste-sites {
+    background: var(--surface);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
   .ligne-site {
     appearance: none;
     border: none;
@@ -163,27 +171,27 @@
     display: flex;
     align-items: center;
     gap: 13px;
-    padding: 16px 2px;
+    padding: 14px 16px;
     cursor: pointer;
     font-family: inherit;
     text-align: left;
     border-bottom: 1px solid var(--line);
     color: inherit;
-    border-radius: 8px;
+    transition: background 0.1s;
   }
-  .ligne-site:hover { background: var(--surface-2); padding-inline: 10px; margin-inline: -10px; width: calc(100% + 20px); }
+  .liste-sites .ligne-site:last-child { border-bottom: none; }
+  .ligne-site:hover, .ligne-site:active { background: var(--surface-2); }
   .ligne-site img {
     width: 38px; height: 38px; border-radius: 9px;
     object-fit: cover;
-    border: 1px solid var(--line);
-    background: var(--surface);
+    background: var(--surface-2);
     flex: none;
   }
   .ligne-site .infos-site { min-width: 0; flex: 1; }
   .ligne-site .nom-site {
-    font-family: "Fraunces", Georgia, serif;
-    font-weight: 550;
-    font-size: 1.04rem;
+    font-weight: 600;
+    font-size: 1.02rem;
+    letter-spacing: -0.012em;
   }
   .ligne-site .domaine-site {
     color: var(--ink-muted);
@@ -201,8 +209,9 @@
     flex: none;
   }
   .ligne-site .spark-chiffre {
-    font-size: 0.86rem;
-    font-weight: 600;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
   }
   .ligne-site .spark-label {
@@ -227,24 +236,23 @@
   .entete-site img {
     width: 46px; height: 46px; border-radius: 11px;
     object-fit: cover;
-    border: 1px solid var(--line);
-    background: var(--surface);
+    background: var(--surface-2);
     flex: none;
   }
   .entete-site .nom-site {
-    font-family: "Fraunces", Georgia, serif;
-    font-size: 1.28rem;
-    font-weight: 550;
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: -0.018em;
   }
   .entete-site .lien-site {
-    color: var(--ink-muted);
-    font-size: 0.8rem;
+    color: var(--series-visitors);
+    font-size: 0.82rem;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 4px;
   }
-  .entete-site .lien-site:hover { color: var(--series-visitors); }
+  .entete-site .lien-site:hover { opacity: 0.7; }
   .entete-site .lien-site svg { flex: none; }
 
   .tuiles {
@@ -253,9 +261,9 @@
     gap: 1px;
     margin-bottom: 18px;
     background: var(--line);
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   }
   .tuile {
     background: var(--surface);
@@ -269,21 +277,21 @@
     gap: 7px;
   }
   .tuile .etiquette .puce {
-    width: 7px; height: 7px; border-radius: 50%; flex: none;
+    width: 8px; height: 8px; border-radius: 50%; flex: none;
   }
   .tuile .valeur {
-    font-family: "Fraunces", Georgia, serif;
     font-size: 2.1rem;
-    font-weight: 550;
-    margin-top: 3px;
-    font-variant-numeric: proportional-nums;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
   }
   .pastille {
     display: inline-flex;
     align-items: center;
     gap: 3px;
     font-size: 0.74rem;
-    font-weight: 600;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     padding: 3px 8px;
     border-radius: 999px;
@@ -295,15 +303,15 @@
 
   .carte {
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 18px;
     margin-bottom: 18px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
   }
   .carte h2 {
-    font-family: "Jost", sans-serif;
-    font-size: 0.86rem;
+    font-size: 0.92rem;
     font-weight: 600;
+    letter-spacing: -0.008em;
     margin: 0 0 3px;
   }
   .carte .legende {
@@ -331,7 +339,7 @@
     color: var(--page);
     font-size: 0.76rem;
     padding: 9px 11px;
-    border-radius: 9px;
+    border-radius: 11px;
     white-space: nowrap;
     opacity: 0;
     transition: opacity 0.1s;
@@ -368,7 +376,7 @@
     border-bottom: 2px solid transparent;
   }
   .onglets-souscarte button[aria-selected="true"] {
-    color: var(--ink);
+    color: var(--series-visitors);
     border-bottom-color: var(--series-visitors);
     font-weight: 600;
   }
@@ -446,10 +454,7 @@
 
 <div class="entete">
   <div>
-    <div class="marque">
-      <span class="point" aria-hidden="true"></span>
-      <h1 id="titre">WebAnalyser</h1>
-    </div>
+    <h1 id="titre">WebAnalyser</h1>
     <p class="soustitre" id="soustitre">Vues et visiteurs uniques de tes sites, en direct depuis le projet Supabase Nobook.</p>
   </div>
   <div class="plage" id="plage" role="group" aria-label="Période" style="display:none">
@@ -1031,7 +1036,7 @@
       label.setAttribute("x", marge.gauche + 2);
       label.setAttribute("y", y - 3);
       label.setAttribute("font-size", "9");
-      label.setAttribute("font-family", "Jost, sans-serif");
+      label.setAttribute("font-family", "-apple-system, sans-serif");
       label.setAttribute("fill", "var(--ink-muted)");
       label.textContent = formatNombre(Math.round(maxAxe * f));
       svg.appendChild(label);
@@ -1064,7 +1069,7 @@
       label.setAttribute("y", hauteur - 7);
       label.setAttribute("text-anchor", "middle");
       label.setAttribute("font-size", "10");
-      label.setAttribute("font-family", "Jost, sans-serif");
+      label.setAttribute("font-family", "-apple-system, sans-serif");
       label.setAttribute("fill", "var(--ink-muted)");
       label.textContent = etiquetteTemps(cleTemps(j));
       svg.appendChild(label);
