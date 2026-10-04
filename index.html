@@ -361,6 +361,22 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .ligne-referent {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    overflow: hidden;
+  }
+  .ligne-referent img {
+    width: 16px; height: 16px; border-radius: 3px;
+    flex: none;
+    background: var(--page);
+  }
+  .ligne-referent span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   table.donnees td.chiffres {
     text-align: right;
     width: 90px;
@@ -706,7 +722,7 @@
     if (etat.sousOnglet === "pages") {
       carteListes.appendChild(tableauDonnees(s.top_pages, "path", "Page", s.views));
     } else if (etat.sousOnglet === "referrers") {
-      carteListes.appendChild(tableauDonnees(s.top_referrers, "referrer", "Source", s.views));
+      carteListes.appendChild(tableauReferents(s.top_referrers, s.views));
     } else {
       carteListes.appendChild(tableauPays(s.top_countries, s.visitors));
     }
@@ -780,6 +796,63 @@
       tdNom.className = "chemin";
       tdNom.textContent = ligne[cle] || "/";
       tdNom.title = ligne[cle] || "";
+      var tdVal = document.createElement("td");
+      tdVal.className = "chiffres";
+      var nb = document.createElement("span"); nb.className = "nombre"; nb.textContent = formatNombre(ligne.views);
+      tdVal.appendChild(nb);
+      if (totalVues > 0) {
+        var pct = document.createElement("span");
+        pct.className = "pourcentage";
+        pct.textContent = Math.round((ligne.views / totalVues) * 100) + "%";
+        tdVal.appendChild(pct);
+      }
+      tr.appendChild(tdNom); tr.appendChild(tdVal);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
+
+  function hoteDepuisUrl(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, "");
+    } catch (e) {
+      return url;
+    }
+  }
+
+  function tableauReferents(lignes, totalVues) {
+    if (!lignes || lignes.length === 0) {
+      return elementVide("Rien à afficher pour l'instant.");
+    }
+    var table = document.createElement("table");
+    table.className = "donnees";
+    var thead = document.createElement("thead");
+    var trh = document.createElement("tr");
+    var thNom = document.createElement("th"); thNom.textContent = "Source";
+    var thVal = document.createElement("th"); thVal.textContent = "Vues"; thVal.style.textAlign = "right";
+    trh.appendChild(thNom); trh.appendChild(thVal);
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    var tbody = document.createElement("tbody");
+    lignes.forEach(function (ligne) {
+      var hote = hoteDepuisUrl(ligne.referrer);
+      var tr = document.createElement("tr");
+      var tdNom = document.createElement("td");
+      tdNom.className = "chemin";
+      tdNom.title = ligne.referrer || "";
+      var ligneRef = document.createElement("div");
+      ligneRef.className = "ligne-referent";
+      var img = document.createElement("img");
+      img.src = "https://www.google.com/s2/favicons?sz=64&domain=" + encodeURIComponent(hote);
+      img.alt = "";
+      img.loading = "lazy";
+      img.addEventListener("error", function () { img.style.visibility = "hidden"; });
+      ligneRef.appendChild(img);
+      var texte = document.createElement("span");
+      texte.textContent = hote;
+      ligneRef.appendChild(texte);
+      tdNom.appendChild(ligneRef);
       var tdVal = document.createElement("td");
       tdVal.className = "chiffres";
       var nb = document.createElement("span"); nb.className = "nombre"; nb.textContent = formatNombre(ligne.views);
