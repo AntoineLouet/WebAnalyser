@@ -110,44 +110,91 @@
     color: var(--page);
   }
 
-  .onglets {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 18px;
-    overflow-x: auto;
-    padding-bottom: 2px;
-  }
-  .onglets button {
+  .retour {
     appearance: none;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    border: 1px solid var(--border);
-    background: var(--surface);
+    border: none;
+    background: transparent;
     color: var(--ink-2);
-    font-size: 0.86rem;
+    font-size: 0.82rem;
     font-weight: 500;
-    padding: 7px 14px 7px 8px;
-    border-radius: 999px;
+    padding: 0;
+    margin-bottom: 14px;
     cursor: pointer;
     font-family: inherit;
-    white-space: nowrap;
-    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
   }
-  .onglets button img {
-    width: 20px; height: 20px; border-radius: 50%;
-    object-fit: cover;
-    background: var(--page);
-  }
-  .onglets button[aria-selected="true"] {
-    color: var(--ink);
-    background: var(--ink);
-    color: var(--page);
-    border-color: var(--ink);
-  }
+  .retour:hover { color: var(--ink); }
 
   .maj { color: var(--ink-muted); font-size: 0.76rem; margin: -10px 0 14px; }
 
+  /* Liste des sites (accueil) */
+  .liste-sites {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .ligne-site {
+    appearance: none;
+    border: none;
+    background: transparent;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+    border-bottom: 1px solid var(--grid);
+    color: inherit;
+  }
+  .ligne-site:last-child { border-bottom: none; }
+  .ligne-site:hover { background: var(--border); }
+  .ligne-site img {
+    width: 40px; height: 40px; border-radius: 11px;
+    object-fit: cover;
+    border: 1px solid var(--border);
+    background: var(--page);
+    flex: none;
+  }
+  .ligne-site .infos-site { min-width: 0; flex: 1; }
+  .ligne-site .nom-site { font-weight: 650; font-size: 0.95rem; }
+  .ligne-site .domaine-site {
+    color: var(--ink-muted);
+    font-size: 0.76rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ligne-site .spark-bloc {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex: none;
+  }
+  .ligne-site .spark-chiffre {
+    font-size: 0.82rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+  .ligne-site .spark-label {
+    font-size: 0.68rem;
+    color: var(--ink-muted);
+  }
+  .ligne-site .chevron {
+    color: var(--ink-muted);
+    font-size: 1rem;
+    flex: none;
+  }
+  @media (max-width: 420px) {
+    .ligne-site .spark-bloc svg { display: none; }
+  }
+
+  /* Page détail d'un site */
   .entete-site {
     display: flex;
     align-items: center;
@@ -344,10 +391,10 @@
 
 <div class="entete">
   <div>
-    <h1>WebAnalyser</h1>
-    <p class="soustitre">Vues et visiteurs uniques, site par site, en direct depuis le projet Supabase Nobook.</p>
+    <h1 id="titre">WebAnalyser</h1>
+    <p class="soustitre" id="soustitre">Vues et visiteurs uniques de tes sites, en direct depuis le projet Supabase Nobook.</p>
   </div>
-  <div class="plage" role="group" aria-label="Période">
+  <div class="plage" id="plage" role="group" aria-label="Période" style="display:none">
     <button data-mode="heures" data-valeur="24">24 h</button>
     <button data-mode="jours" data-valeur="7">7 j</button>
     <button data-mode="jours" data-valeur="30" aria-pressed="true">30 j</button>
@@ -355,7 +402,6 @@
   </div>
 </div>
 
-<div class="onglets" id="onglets" role="tablist"></div>
 <p class="maj" id="maj"></p>
 <div id="contenu"></div>
 <div class="bulle" id="bulle"></div>
@@ -364,20 +410,21 @@
 (function () {
   var FONCTION = "https://pjudywzdrixhddemhhub.supabase.co/functions/v1/stats";
   var SITES = {
-    "riad-sasha":   { nom: "Riad Sasha",    domaine: "riadsasha.com",              logo: "assets/logos/riad-sasha.png" },
-    "riadsoulmate": { nom: "Riad Soulmate", domaine: null,                         logo: "assets/logos/riadsoulmate.svg" },
-    "chezmamiejo":  { nom: "Chez Mamie Jo", domaine: "chezmamiejo-loudenvielle.fr",logo: "assets/logos/chezmamiejo.png" }
+    "riad-sasha":   { nom: "Riad Sasha",    domaine: "riadsasha.com",               logo: "assets/logos/riad-sasha.png" },
+    "riadsoulmate": { nom: "Riad Soulmate", domaine: null,                          logo: "assets/logos/riadsoulmate.svg" },
+    "chezmamiejo":  { nom: "Chez Mamie Jo", domaine: "chezmamiejo-loudenvielle.fr", logo: "assets/logos/chezmamiejo.png" }
   };
   var ORDRE = ["riad-sasha", "chezmamiejo", "riadsoulmate"];
 
   var etat = {
+    vue: "liste",              // "liste" | "site"
     mode: "jours", valeur: 30,
     actuel: null, precedent: null,
+    septJours: null,
     ongletActif: null, sousOnglet: "pages"
   };
 
   function infoSite(id) { return SITES[id] || { nom: id, domaine: null, logo: null }; }
-  function nomSite(id) { return infoSite(id).nom; }
 
   function formatNombre(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -403,9 +450,14 @@
         qA = "?days=" + etat.valeur;
         qB = "?days=" + (etat.valeur * 2);
       }
-      var [r1, r2] = await Promise.all([fetch(FONCTION + qA), fetch(FONCTION + qB)]);
+      var [r1, r2, r3] = await Promise.all([
+        fetch(FONCTION + qA),
+        fetch(FONCTION + qB),
+        fetch(FONCTION + "?days=7")
+      ]);
       var actuel = await r1.json();
       var double = await r2.json();
+      etat.septJours = await r3.json();
       etat.actuel = actuel;
       var precedent = { sites: {} };
       Object.keys(double.sites || {}).forEach(function (id) {
@@ -420,51 +472,41 @@
     } catch (e) {
       etat.actuel = { erreur: true };
     }
-
-    if (!etat.ongletActif || (etat.actuel.sites && !etat.actuel.sites[etat.ongletActif] && listeSites().length)) {
-      etat.ongletActif = listeSites()[0] || null;
-    }
-    construireOnglets();
     rendre();
   }
 
   function listeSites() {
-    var connus = ORDRE.filter(function (id) { return true; });
-    if (!etat.actuel || !etat.actuel.sites) return connus;
-    var vus = Object.keys(etat.actuel.sites);
-    var tous = connus.concat(vus.filter(function (id) { return connus.indexOf(id) === -1; }));
-    return tous.sort(function (a, b) {
-      var va = (etat.actuel.sites[a] && etat.actuel.sites[a].views) || 0;
-      var vb = (etat.actuel.sites[b] && etat.actuel.sites[b].views) || 0;
+    var base = ORDRE.slice();
+    if (etat.septJours && etat.septJours.sites) {
+      Object.keys(etat.septJours.sites).forEach(function (id) {
+        if (base.indexOf(id) === -1) base.push(id);
+      });
+    }
+    return base.sort(function (a, b) {
+      var sites = (etat.septJours && etat.septJours.sites) || {};
+      var va = (sites[a] && sites[a].views) || 0;
+      var vb = (sites[b] && sites[b].views) || 0;
       return vb - va;
     });
   }
 
-  function construireOnglets() {
-    var conteneur = document.getElementById("onglets");
-    conteneur.textContent = "";
-    var sites = listeSites();
-
-    sites.forEach(function (id) {
-      var info = infoSite(id);
-      var b = document.createElement("button");
-      b.setAttribute("role", "tab");
-      if (info.logo) {
-        var img = document.createElement("img");
-        img.src = info.logo;
-        img.alt = "";
-        b.appendChild(img);
-      }
-      b.appendChild(document.createTextNode(info.nom));
-      b.setAttribute("aria-selected", String(id === etat.ongletActif));
-      b.addEventListener("click", function () { etat.ongletActif = id; rendre(); });
-      conteneur.appendChild(b);
-    });
+  function allerALaListe() {
+    etat.vue = "liste";
+    etat.ongletActif = null;
+    rendre();
+  }
+  function ouvrirSite(id) {
+    etat.vue = "site";
+    etat.ongletActif = id;
+    rendre();
   }
 
   function rendre() {
     var contenu = document.getElementById("contenu");
     var majEl = document.getElementById("maj");
+    var plageEl = document.getElementById("plage");
+    var titreEl = document.getElementById("titre");
+    var soustitreEl = document.getElementById("soustitre");
     contenu.textContent = "";
 
     if (!etat.actuel || etat.actuel.erreur) {
@@ -477,11 +519,81 @@
       majEl.textContent = "Mis à jour à " + d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
     }
 
-    if (!etat.ongletActif) {
-      contenu.appendChild(elementVide("Pas encore de visite enregistrée sur cette période."));
+    if (etat.vue === "liste") {
+      plageEl.style.display = "none";
+      titreEl.textContent = "WebAnalyser";
+      soustitreEl.textContent = "Vues et visiteurs uniques de tes sites, en direct depuis le projet Supabase Nobook.";
+      rendreListe(contenu);
+    } else {
+      plageEl.style.display = "flex";
+      titreEl.textContent = "WebAnalyser";
+      soustitreEl.textContent = "Détail du site sélectionné.";
+      rendreSite(contenu, etat.ongletActif);
+    }
+  }
+
+  function rendreListe(contenu) {
+    var sites = listeSites();
+    var septSites = (etat.septJours && etat.septJours.sites) || {};
+
+    if (sites.length === 0) {
+      contenu.appendChild(elementVide("Pas encore de site suivi."));
       return;
     }
-    rendreSite(contenu, etat.ongletActif);
+
+    var liste = document.createElement("div");
+    liste.className = "liste-sites";
+
+    sites.forEach(function (id) {
+      var info = infoSite(id);
+      var s7 = septSites[id] || { views: 0, visitors: 0, by_day: [] };
+
+      var ligne = document.createElement("button");
+      ligne.className = "ligne-site";
+      ligne.type = "button";
+      ligne.addEventListener("click", function () { ouvrirSite(id); });
+
+      if (info.logo) {
+        var img = document.createElement("img");
+        img.src = info.logo;
+        img.alt = "";
+        ligne.appendChild(img);
+      }
+
+      var infosSite = document.createElement("div");
+      infosSite.className = "infos-site";
+      var nomEl = document.createElement("div");
+      nomEl.className = "nom-site";
+      nomEl.textContent = info.nom;
+      infosSite.appendChild(nomEl);
+      var domEl = document.createElement("div");
+      domEl.className = "domaine-site";
+      domEl.textContent = info.domaine || "pas encore de domaine";
+      infosSite.appendChild(domEl);
+      ligne.appendChild(infosSite);
+
+      var sparkBloc = document.createElement("div");
+      sparkBloc.className = "spark-bloc";
+      sparkBloc.appendChild(dessinerSparkline(s7.by_day, "var(--series-visitors)"));
+      var chiffre = document.createElement("div");
+      chiffre.className = "spark-chiffre";
+      chiffre.textContent = formatNombre(s7.visitors);
+      var label = document.createElement("div");
+      label.className = "spark-label";
+      label.textContent = "visiteurs · 7j";
+      sparkBloc.appendChild(chiffre);
+      sparkBloc.appendChild(label);
+      ligne.appendChild(sparkBloc);
+
+      var chevron = document.createElement("span");
+      chevron.className = "chevron";
+      chevron.textContent = "›";
+      ligne.appendChild(chevron);
+
+      liste.appendChild(ligne);
+    });
+
+    contenu.appendChild(liste);
   }
 
   function pastilleTendance(actuelV, precedentV) {
@@ -496,6 +608,14 @@
 
   function rendreSite(contenu, id) {
     var info = infoSite(id);
+
+    var retour = document.createElement("button");
+    retour.className = "retour";
+    retour.type = "button";
+    retour.textContent = "← Mes sites";
+    retour.addEventListener("click", allerALaListe);
+    contenu.appendChild(retour);
+
     var s = (etat.actuel.sites && etat.actuel.sites[id]) || { views: 0, visitors: 0, by_day: [], by_hour: [], top_pages: [], top_referrers: [] };
     var sPrec = (etat.precedent.sites && etat.precedent.sites[id]) || { views: 0, visitors: 0 };
 
@@ -650,6 +770,32 @@
     });
     table.appendChild(tbody);
     return table;
+  }
+
+  function dessinerSparkline(jours, couleur) {
+    var largeur = 72, hauteur = 28;
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("width", largeur);
+    svg.setAttribute("height", hauteur);
+    svg.setAttribute("viewBox", "0 0 " + largeur + " " + hauteur);
+    if (!jours || jours.length < 2) return svg;
+    var max = 1;
+    jours.forEach(function (j) { max = Math.max(max, j.views); });
+    var n = jours.length;
+    var pts = jours.map(function (j, i) {
+      var x = (i / (n - 1)) * (largeur - 4) + 2;
+      var y = hauteur - 3 - (j.views / max) * (hauteur - 6);
+      return x + "," + y;
+    });
+    var polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+    polyline.setAttribute("points", pts.join(" "));
+    polyline.setAttribute("fill", "none");
+    polyline.setAttribute("stroke", couleur);
+    polyline.setAttribute("stroke-width", "1.75");
+    polyline.setAttribute("stroke-linecap", "round");
+    polyline.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(polyline);
+    return svg;
   }
 
   // Barres empilées : visiteurs (teinte forte) en bas, complément des vues (teinte claire) au-dessus
