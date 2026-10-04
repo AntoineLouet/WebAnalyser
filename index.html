@@ -426,6 +426,25 @@
 
   function infoSite(id) { return SITES[id] || { nom: id, domaine: null, logo: null }; }
 
+  var formateurPays = (typeof Intl !== "undefined" && Intl.DisplayNames)
+    ? new Intl.DisplayNames(["fr"], { type: "region" })
+    : null;
+  function nomPays(code) {
+    if (!code) return code;
+    try {
+      return (formateurPays && formateurPays.of(code.toUpperCase())) || code;
+    } catch (e) {
+      return code;
+    }
+  }
+  function drapeauPays(code) {
+    if (!code || code.length !== 2) return "🌐";
+    var points = code.toUpperCase().split("").map(function (c) {
+      return 127397 + c.charCodeAt(0);
+    });
+    return String.fromCodePoint.apply(null, points);
+  }
+
   function formatNombre(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
     if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
@@ -616,7 +635,7 @@
     retour.addEventListener("click", allerALaListe);
     contenu.appendChild(retour);
 
-    var s = (etat.actuel.sites && etat.actuel.sites[id]) || { views: 0, visitors: 0, by_day: [], by_hour: [], top_pages: [], top_referrers: [] };
+    var s = (etat.actuel.sites && etat.actuel.sites[id]) || { views: 0, visitors: 0, by_day: [], by_hour: [], top_pages: [], top_referrers: [], top_countries: [] };
     var sPrec = (etat.precedent.sites && etat.precedent.sites[id]) || { views: 0, visitors: 0 };
 
     var enTete = document.createElement("div");
@@ -672,18 +691,24 @@
     ongletsSous.className = "onglets-souscarte";
     var btnPages = document.createElement("button"); btnPages.textContent = "Pages"; btnPages.setAttribute("role", "tab");
     var btnRef = document.createElement("button"); btnRef.textContent = "Référents"; btnRef.setAttribute("role", "tab");
+    var btnPays = document.createElement("button"); btnPays.textContent = "Pays"; btnPays.setAttribute("role", "tab");
     btnPages.addEventListener("click", function () { etat.sousOnglet = "pages"; rendre(); });
     btnRef.addEventListener("click", function () { etat.sousOnglet = "referrers"; rendre(); });
+    btnPays.addEventListener("click", function () { etat.sousOnglet = "countries"; rendre(); });
     btnPages.setAttribute("aria-selected", String(etat.sousOnglet === "pages"));
     btnRef.setAttribute("aria-selected", String(etat.sousOnglet === "referrers"));
+    btnPays.setAttribute("aria-selected", String(etat.sousOnglet === "countries"));
     ongletsSous.appendChild(btnPages);
     ongletsSous.appendChild(btnRef);
+    ongletsSous.appendChild(btnPays);
     carteListes.appendChild(ongletsSous);
 
     if (etat.sousOnglet === "pages") {
       carteListes.appendChild(tableauDonnees(s.top_pages, "path", "Page", s.views));
-    } else {
+    } else if (etat.sousOnglet === "referrers") {
       carteListes.appendChild(tableauDonnees(s.top_referrers, "referrer", "Source", s.views));
+    } else {
+      carteListes.appendChild(tableauPays(s.top_countries, s.visitors));
     }
     contenu.appendChild(carteListes);
   }
@@ -763,6 +788,42 @@
         var pct = document.createElement("span");
         pct.className = "pourcentage";
         pct.textContent = Math.round((ligne.views / totalVues) * 100) + "%";
+        tdVal.appendChild(pct);
+      }
+      tr.appendChild(tdNom); tr.appendChild(tdVal);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    return table;
+  }
+
+  function tableauPays(lignes, totalVisiteurs) {
+    if (!lignes || lignes.length === 0) {
+      return elementVide("Rien à afficher pour l'instant.");
+    }
+    var table = document.createElement("table");
+    table.className = "donnees";
+    var thead = document.createElement("thead");
+    var trh = document.createElement("tr");
+    var thNom = document.createElement("th"); thNom.textContent = "Pays";
+    var thVal = document.createElement("th"); thVal.textContent = "Visiteurs"; thVal.style.textAlign = "right";
+    trh.appendChild(thNom); trh.appendChild(thVal);
+    thead.appendChild(trh);
+    table.appendChild(thead);
+    var tbody = document.createElement("tbody");
+    lignes.forEach(function (ligne) {
+      var tr = document.createElement("tr");
+      var tdNom = document.createElement("td");
+      tdNom.className = "chemin";
+      tdNom.textContent = drapeauPays(ligne.country) + " " + nomPays(ligne.country);
+      var tdVal = document.createElement("td");
+      tdVal.className = "chiffres";
+      var nb = document.createElement("span"); nb.className = "nombre"; nb.textContent = formatNombre(ligne.visitors);
+      tdVal.appendChild(nb);
+      if (totalVisiteurs > 0) {
+        var pct = document.createElement("span");
+        pct.className = "pourcentage";
+        pct.textContent = Math.round((ligne.visitors / totalVisiteurs) * 100) + "%";
         tdVal.appendChild(pct);
       }
       tr.appendChild(tdNom); tr.appendChild(tdVal);
