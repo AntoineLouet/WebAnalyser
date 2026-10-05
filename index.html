@@ -1030,9 +1030,11 @@
     }
 
     var n = serie.length;
-    var epaisseur = n <= 14 ? 22 : (n <= 30 ? 12 : 6);
-    var pas = Math.max(epaisseur + 6, epaisseur * 1.7);
-    var largeur = Math.max(560, n * pas);
+    // Toujours tenir dans la largeur de l'écran : pas de défilement
+    // horizontal, les barres se resserrent plutôt que de déborder.
+    var largeur = conteneur.clientWidth || 320;
+    var pas = largeur / n;
+    var epaisseur = Math.max(1.5, Math.min(22, pas * 0.62));
     var hauteur = 220;
     var marge = { haut: 20, bas: 26, gauche: 8, droite: 8 };
     var zoneH = hauteur - marge.haut - marge.bas;
