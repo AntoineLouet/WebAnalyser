@@ -481,7 +481,6 @@
 <script>
 (function () {
   var FONCTION = "https://pjudywzdrixhddemhhub.supabase.co/functions/v1/stats";
-  var RESERVATIONS_JOURS = 30; // fenêtre fixe : c'est le chiffre utilisé pour facturer
   var SITES = {
     "riad-sasha":   { nom: "Riad Sasha",    domaine: "riadsasha.com",               logo: "assets/logos/riad-sasha.png",
                        reservationsApi: "https://xpezxeziaykyxowocyrk.supabase.co/functions/v1/riad-booking-count" },
@@ -503,7 +502,8 @@
     mode: "jours", valeur: 30,
     actuel: null, precedent: null,
     septJours: null,
-    reservations: {},          // site_id -> nombre de demandes sur RESERVATIONS_JOURS, ou null si indisponible
+    reservations: {},          // site_id -> nombre de demandes sur etat.joursResa, ou null si indisponible
+    joursResa: 30,
     ongletActif: null, sousOnglet: "pages"
   };
 
@@ -561,6 +561,11 @@
         qA = "?days=" + etat.valeur;
         qB = "?days=" + (etat.valeur * 2);
       }
+      // Les réservations suivent la même période que le reste : en mode
+      // heures (24h), ça reste exprimé en jours (24h = 1 j), l'API ne
+      // connaissant que des jours.
+      etat.joursResa = etat.mode === "heures" ? Math.max(1, Math.round(etat.valeur / 24)) : etat.valeur;
+
       var [r1, r2, r3] = await Promise.all([
         fetch(FONCTION + qA),
         fetch(FONCTION + qB),
@@ -580,27 +585,22 @@
         };
       });
       etat.precedent = precedent;
+
+      var idsResa = Object.keys(SITES).filter(function (id) { return SITES[id].reservationsApi; });
+      await Promise.all(idsResa.map(function (id) {
+        var url = SITES[id].reservationsApi + "?days=" + etat.joursResa;
+        return fetch(url)
+          .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+          .then(function (data) {
+            etat.reservations[id] = (typeof data.count === "number") ? data.count : null;
+          })
+          .catch(function () {
+            etat.reservations[id] = null;
+          });
+      }));
     } catch (e) {
       etat.actuel = { erreur: true };
     }
-    rendre();
-  }
-
-  // Indépendant du sélecteur de période : c'est toujours le chiffre des
-  // 30 derniers jours qui sert à facturer, quelle que soit la vue affichée.
-  async function chargerReservations() {
-    var ids = Object.keys(SITES).filter(function (id) { return SITES[id].reservationsApi; });
-    await Promise.all(ids.map(function (id) {
-      var url = SITES[id].reservationsApi + "?days=" + RESERVATIONS_JOURS;
-      return fetch(url)
-        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
-        .then(function (data) {
-          etat.reservations[id] = (typeof data.count === "number") ? data.count : null;
-        })
-        .catch(function () {
-          etat.reservations[id] = null;
-        });
-    }));
     rendre();
   }
 
@@ -789,7 +789,7 @@
     tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
     tuiles.appendChild(tuileDuree("Durée moyenne", s.avg_duration_seconds, "var(--series-duree)"));
     if (info.reservationsApi) {
-      tuiles.appendChild(tuileReservations(etat.reservations[id]));
+      tuiles.appendChild(tuileReservations(etat.reservations[id], etat.joursResa));
     }
     contenu.appendChild(tuiles);
 
@@ -890,9 +890,9 @@
     return d;
   }
 
-  // Chiffre utilisé pour facturer le riad : toujours sur RESERVATIONS_JOURS,
-  // jamais sur la période affichée à l'écran.
-  function tuileReservations(nombre) {
+  // Suit la période choisie en haut de l'écran (24h compte comme 1 j,
+  // l'API de réservations ne connaissant que des jours).
+  function tuileReservations(nombre, jours) {
     var d = document.createElement("div");
     d.className = "tuile";
     var e = document.createElement("div");
@@ -901,7 +901,7 @@
     puce.className = "puce";
     puce.style.background = "var(--series-resa)";
     e.appendChild(puce);
-    e.appendChild(document.createTextNode("Réservations (" + RESERVATIONS_JOURS + " j)"));
+    e.appendChild(document.createTextNode("Réservations (" + jours + " j)"));
     d.appendChild(e);
 
     var v = document.createElement("div");
@@ -1275,8 +1275,6 @@
 
   charger();
   setInterval(charger, 60000);
-  chargerReservations();
-  setInterval(chargerReservations, 60000);
 })();
 </script>
 </body>
