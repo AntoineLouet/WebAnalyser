@@ -24,6 +24,7 @@
     --series-visitors: #0071e3;
     --series-views: #b9dcfb;
     --series-duree: #5e5ce6;
+    --series-resa: #ff9500;
     --good-bg: #34c759;
     --good-fg: #ffffff;
     --bad-bg: #ff3b30;
@@ -46,6 +47,7 @@
       --series-visitors: #2997ff;
       --series-views: #1b4160;
       --series-duree: #7d7aff;
+      --series-resa: #ff9f0a;
       --good-bg: #30d158;
       --good-fg: #000000;
       --bad-bg: #ff453a;
@@ -68,6 +70,7 @@
     --series-visitors: #2997ff;
     --series-views: #1b4160;
     --series-duree: #7d7aff;
+    --series-resa: #ff9f0a;
     --good-bg: #30d158;
     --good-fg: #000000;
     --bad-bg: #ff453a;
@@ -478,10 +481,14 @@
 <script>
 (function () {
   var FONCTION = "https://pjudywzdrixhddemhhub.supabase.co/functions/v1/stats";
+  var RESERVATIONS_JOURS = 30; // fenêtre fixe : c'est le chiffre utilisé pour facturer
   var SITES = {
-    "riad-sasha":   { nom: "Riad Sasha",    domaine: "riadsasha.com",               logo: "assets/logos/riad-sasha.png" },
-    "riadsoulmate": { nom: "Riad Soulmate", domaine: null,                          logo: "assets/logos/riadsoulmate.svg" },
-    "chezmamiejo":  { nom: "Chez Mamie Jo", domaine: "chezmamiejo-loudenvielle.fr", logo: "assets/logos/chezmamiejo.png" }
+    "riad-sasha":   { nom: "Riad Sasha",    domaine: "riadsasha.com",               logo: "assets/logos/riad-sasha.png",
+                       reservationsApi: "https://xpezxeziaykyxowocyrk.supabase.co/functions/v1/riad-booking-count" },
+    "riadsoulmate": { nom: "Riad Soulmate", domaine: null,                          logo: "assets/logos/riadsoulmate.svg",
+                       reservationsApi: null }, // widget encore en mode démo, pas de base derrière
+    "chezmamiejo":  { nom: "Chez Mamie Jo", domaine: "chezmamiejo-loudenvielle.fr", logo: "assets/logos/chezmamiejo.png",
+                       reservationsApi: null }  // restaurant : pas de réservations "en direct" au même sens
   };
   var ORDRE = ["riad-sasha", "chezmamiejo", "riadsoulmate"];
 
@@ -496,6 +503,7 @@
     mode: "jours", valeur: 30,
     actuel: null, precedent: null,
     septJours: null,
+    reservations: {},          // site_id -> nombre de demandes sur RESERVATIONS_JOURS, ou null si indisponible
     ongletActif: null, sousOnglet: "pages"
   };
 
@@ -575,6 +583,24 @@
     } catch (e) {
       etat.actuel = { erreur: true };
     }
+    rendre();
+  }
+
+  // Indépendant du sélecteur de période : c'est toujours le chiffre des
+  // 30 derniers jours qui sert à facturer, quelle que soit la vue affichée.
+  async function chargerReservations() {
+    var ids = Object.keys(SITES).filter(function (id) { return SITES[id].reservationsApi; });
+    await Promise.all(ids.map(function (id) {
+      var url = SITES[id].reservationsApi + "?days=" + RESERVATIONS_JOURS;
+      return fetch(url)
+        .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
+        .then(function (data) {
+          etat.reservations[id] = (typeof data.count === "number") ? data.count : null;
+        })
+        .catch(function () {
+          etat.reservations[id] = null;
+        });
+    }));
     rendre();
   }
 
@@ -762,6 +788,9 @@
     tuiles.appendChild(tuile("Visiteurs uniques", s.visitors, sPrec.visitors, "var(--series-visitors)"));
     tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
     tuiles.appendChild(tuileDuree("Durée moyenne", s.avg_duration_seconds, "var(--series-duree)"));
+    if (info.reservationsApi) {
+      tuiles.appendChild(tuileReservations(etat.reservations[id]));
+    }
     contenu.appendChild(tuiles);
 
     var carteGraph = document.createElement("div");
@@ -856,6 +885,28 @@
     var v = document.createElement("div");
     v.className = "valeur";
     v.textContent = formatDuree(secondes);
+    d.appendChild(v);
+
+    return d;
+  }
+
+  // Chiffre utilisé pour facturer le riad : toujours sur RESERVATIONS_JOURS,
+  // jamais sur la période affichée à l'écran.
+  function tuileReservations(nombre) {
+    var d = document.createElement("div");
+    d.className = "tuile";
+    var e = document.createElement("div");
+    e.className = "etiquette";
+    var puce = document.createElement("span");
+    puce.className = "puce";
+    puce.style.background = "var(--series-resa)";
+    e.appendChild(puce);
+    e.appendChild(document.createTextNode("Réservations (" + RESERVATIONS_JOURS + " j)"));
+    d.appendChild(e);
+
+    var v = document.createElement("div");
+    v.className = "valeur";
+    v.textContent = (nombre === null || nombre === undefined) ? "—" : formatNombre(nombre);
     d.appendChild(v);
 
     return d;
@@ -1224,6 +1275,8 @@
 
   charger();
   setInterval(charger, 60000);
+  chargerReservations();
+  setInterval(chargerReservations, 60000);
 })();
 </script>
 </body>
