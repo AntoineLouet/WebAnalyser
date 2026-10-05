@@ -592,7 +592,7 @@
         return fetch(url)
           .then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.json(); })
           .then(function (data) {
-            etat.reservations[id] = (typeof data.count === "number") ? data.count : null;
+            etat.reservations[id] = (typeof data.nights === "number") ? data.nights : null;
           })
           .catch(function () {
             etat.reservations[id] = null;
@@ -789,7 +789,7 @@
     tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
     tuiles.appendChild(tuileDuree("Durée moyenne", s.avg_duration_seconds, "var(--series-duree)"));
     if (info.reservationsApi) {
-      tuiles.appendChild(tuileReservations(etat.reservations[id], etat.joursResa));
+      tuiles.appendChild(tuileNuits(etat.reservations[id], etat.joursResa));
     }
     contenu.appendChild(tuiles);
 
@@ -890,9 +890,10 @@
     return d;
   }
 
-  // Suit la période choisie en haut de l'écran (24h compte comme 1 j,
-  // l'API de réservations ne connaissant que des jours).
-  function tuileReservations(nombre, jours) {
+  // Total de nuits réservées (toutes demandes, tous statuts) sur la période
+  // choisie en haut de l'écran — c'est le chiffre qui sert à facturer.
+  // 24h compte comme 1 j, l'API ne connaissant que des jours.
+  function tuileNuits(nombre, jours) {
     var d = document.createElement("div");
     d.className = "tuile";
     var e = document.createElement("div");
@@ -901,7 +902,7 @@
     puce.className = "puce";
     puce.style.background = "var(--series-resa)";
     e.appendChild(puce);
-    e.appendChild(document.createTextNode("Réservations (" + jours + " j)"));
+    e.appendChild(document.createTextNode("Nuits réservées (" + jours + " j)"));
     d.appendChild(e);
 
     var v = document.createElement("div");
