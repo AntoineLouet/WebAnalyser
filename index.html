@@ -20,6 +20,7 @@
     --line-strong: rgba(60,60,67,0.29);
     --series-visitors: #0071e3;
     --series-views: #b9dcfb;
+    --series-duree: #5e5ce6;
     --good-bg: #34c759;
     --good-fg: #ffffff;
     --bad-bg: #ff3b30;
@@ -41,6 +42,7 @@
       --line-strong: rgba(255,255,255,0.28);
       --series-visitors: #2997ff;
       --series-views: #1b4160;
+      --series-duree: #7d7aff;
       --good-bg: #30d158;
       --good-fg: #000000;
       --bad-bg: #ff453a;
@@ -62,6 +64,7 @@
     --line-strong: rgba(255,255,255,0.28);
     --series-visitors: #2997ff;
     --series-views: #1b4160;
+    --series-duree: #7d7aff;
     --good-bg: #30d158;
     --good-fg: #000000;
     --bad-bg: #ff453a;
@@ -519,6 +522,15 @@
     if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
     return String(n);
   }
+  function formatDuree(secondes) {
+    if (secondes === null || secondes === undefined) return "—";
+    secondes = Math.max(0, Math.round(secondes));
+    var h = Math.floor(secondes / 3600);
+    var m = Math.floor((secondes % 3600) / 60);
+    var s = secondes % 60;
+    if (h > 0) return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+    return m + ":" + String(s).padStart(2, "0");
+  }
   function cleTemps(entree) { return entree.day || entree.hour; }
   function etiquetteTemps(iso) {
     var d = new Date(iso.length <= 10 ? iso + "T00:00:00" : iso);
@@ -707,7 +719,7 @@
     retour.addEventListener("click", allerALaListe);
     contenu.appendChild(retour);
 
-    var s = (etat.actuel.sites && etat.actuel.sites[id]) || { views: 0, visitors: 0, by_day: [], by_hour: [], top_pages: [], top_referrers: [], top_countries: [] };
+    var s = (etat.actuel.sites && etat.actuel.sites[id]) || { views: 0, visitors: 0, avg_duration_seconds: null, by_day: [], by_hour: [], top_pages: [], top_referrers: [], top_countries: [] };
     var sPrec = (etat.precedent.sites && etat.precedent.sites[id]) || { views: 0, visitors: 0 };
 
     var enTete = document.createElement("div");
@@ -746,6 +758,7 @@
     tuiles.className = "tuiles";
     tuiles.appendChild(tuile("Visiteurs uniques", s.visitors, sPrec.visitors, "var(--series-visitors)"));
     tuiles.appendChild(tuile("Vues", s.views, sPrec.views, "var(--series-views)"));
+    tuiles.appendChild(tuileDuree("Durée moyenne", s.avg_duration_seconds, "var(--series-duree)"));
     contenu.appendChild(tuiles);
 
     var carteGraph = document.createElement("div");
@@ -821,6 +834,26 @@
 
     var badge = pastilleTendance(valeurActuelle, valeurPrecedente);
     if (badge) d.appendChild(badge);
+
+    return d;
+  }
+
+  function tuileDuree(label, secondes, couleur) {
+    var d = document.createElement("div");
+    d.className = "tuile";
+    var e = document.createElement("div");
+    e.className = "etiquette";
+    var puce = document.createElement("span");
+    puce.className = "puce";
+    puce.style.background = couleur;
+    e.appendChild(puce);
+    e.appendChild(document.createTextNode(label));
+    d.appendChild(e);
+
+    var v = document.createElement("div");
+    v.className = "valeur";
+    v.textContent = formatDuree(secondes);
+    d.appendChild(v);
 
     return d;
   }
