@@ -1091,6 +1091,17 @@
         svg.appendChild(barreArrondie(x0, yVues, epaisseur, yVisiteurs - yVues, rayon, "var(--series-views)"));
       } else if (j.views > 0 && j.visitors === 0) {
         svg.appendChild(barreArrondie(x0, yVues, epaisseur, baseline - yVues, rayon, "var(--series-views)"));
+      } else if (j.views === 0 && j.visitors === 0) {
+        // Marque explicitement les créneaux à zéro (plutôt qu'un vide qui
+        // pourrait passer pour une donnée manquante).
+        var zero = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        zero.setAttribute("x", x0);
+        zero.setAttribute("y", baseline - 2);
+        zero.setAttribute("width", epaisseur);
+        zero.setAttribute("height", 2);
+        zero.setAttribute("rx", 1);
+        zero.setAttribute("fill", "var(--line-strong)");
+        svg.appendChild(zero);
       }
     });
 
